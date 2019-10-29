@@ -193,6 +193,7 @@ import android.os.Trace;
 import android.os.UEventObserver;
 import android.os.UserHandle;
 import android.os.Vibrator;
+import android.pocket.PocketManager;
 import android.provider.DeviceConfig;
 import android.provider.MediaStore;
 import android.provider.Settings;
@@ -837,6 +838,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private final List<DeviceKeyHandler> mDeviceKeyHandlers = new ArrayList<>();
 
     private LineageButtons mLineageButtons;
+
+    private PocketManager mPocketManager;
 
     private final boolean mVisibleBackgroundUsersEnabled = isVisibleBackgroundUsersEnabled();
 
@@ -6934,6 +6937,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             mKeyguardDelegate.onStartedGoingToSleep(pmSleepReason);
         }
 
+        if (mPocketManager != null) {
+            mPocketManager.onInteractiveChanged(false);
+        }
+
         setLowPowerMode(true);
     }
 
@@ -7008,6 +7015,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
 
         mPowerButtonLaunchGestureTriggered = false;
+
+        if (mPocketManager != null) {
+            mPocketManager.onInteractiveChanged(true);
+        }
         
         releaseMemoryAtScreenOn();
         setLowPowerMode(false);
@@ -7462,6 +7473,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         // So it is better not to bind keyguard here.
         mKeyguardDelegate.onSystemReady();
         mModifierShortcutManager.onSystemReady();
+
+        mPocketManager = (PocketManager) mContext.getSystemService(Context.POCKET_SERVICE);
 
         mVrManagerInternal = LocalServices.getService(VrManagerInternal.class);
         if (mVrManagerInternal != null) {
