@@ -25,8 +25,10 @@ import android.graphics.drawable.Icon;
 import android.media.MediaMetadata;
 import android.media.session.MediaController;
 import android.media.session.MediaSession;
+import android.media.session.MediaSessionManager;
 import android.media.session.PlaybackState;
 import android.os.Handler;
+import android.os.UserHandle;
 import android.service.notification.NotificationStats;
 import android.service.notification.StatusBarNotification;
 import android.text.TextUtils;
@@ -61,6 +63,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Executor;
 
+import java.util.List;
+
 /**
  * Handles tasks and state related to media notifications. For example, there is a 'current' media
  * notification, which this class keeps track of.
@@ -86,6 +90,7 @@ public class NotificationMediaManager implements Dumpable {
     private final NotifPipeline mNotifPipeline;
     private final NotifCollection mNotifCollection;
 
+    private final MediaSessionManager mMediaSessionManager;
     private final Context mContext;
     private final ArrayList<MediaListener> mMediaListeners;
 
@@ -157,6 +162,7 @@ public class NotificationMediaManager implements Dumpable {
         mBackgroundExecutor = backgroundExecutor;
         mHandler = handler;
         mColorExtractor = colorExtractor;
+        mMediaSessionManager = mContext.getSystemService(MediaSessionManager.class);
 
         setupNotifPipeline();
 
@@ -422,10 +428,22 @@ public class NotificationMediaManager implements Dumpable {
                 callbacks.get(i).onPrimaryMetadataOrStateChanged(mMediaMetadata, state);
             }
             if (mMediaMetadata != null) {
-                MediaSessionManager.Companion.get().onMetadataChanged(mMediaMetadata);
+               com.android.systemui.media.MediaSessionManager.Companion.get().onMetadataChanged(mMediaMetadata);
             }
-            MediaSessionManager.Companion.get().onPlaybackStateChanged(state);
+            com.android.systemui.media.MediaSessionManager.Companion.get().onPlaybackStateChanged(state);
         });
+    }
+
+    public boolean getPlaybackStateIsEqual(@PlaybackState.State int state) {
+        if (mMediaController != null) {
+            if (mMediaController.getPlaybackState() != null) {
+               return state == mMediaController.getPlaybackState().getState();
+            } else {
+               return false;
+            }
+        } else {
+            return false;
+        }
     }
 
     @Override
@@ -494,5 +512,53 @@ public class NotificationMediaManager implements Dumpable {
                 @PlaybackState.State int state) {}
 
         default void setMediaNotificationColor(int color) {};
+    }
+
+    public void skipTrackNext() {
+        if (mMediaSessionManager != null) {
+            final List<MediaController> sessions
+                    = mMediaSessionManager.getActiveSessionsForUser(
+                    null, UserHandle.CURRENT);
+            for (MediaController aController : sessions) {
+                if (PlaybackState.STATE_PLAYING ==
+                        getMediaControllerPlaybackState(aController)) {
+                    aController.getTransportControls().skipToNext();
+                    break;
+                }
+            }
+        }
+    }
+
+    public void skipTrackPrevious() {
+        if (mMediaSessionManager != null) {
+            final List<MediaController> sessions
+                    = mMediaSessionManager.getActiveSessionsForUser(
+                    null, UserHandle.CURRENT);
+            for (MediaController aController : sessions) {
+                if (PlaybackState.STATE_PLAYING ==
+                        getMediaControllerPlaybackState(aController)) {
+                    aController.getTransportControls().skipToPrevious();
+                    break;
+                }
+            }
+        }
+    }
+
+    public void playPauseTrack() {
+        if (mMediaSessionManager != null) {
+            final List<MediaController> sessions
+                    = mMediaSessionManager.getActiveSessionsForUser(
+                    null, UserHandle.CURRENT);
+            for (MediaController aController : sessions) {
+                if (PlaybackState.STATE_PLAYING ==
+                        getMediaControllerPlaybackState(aController)) {
+                    aController.getTransportControls().pause();
+                    break;
+                } else {
+                    aController.getTransportControls().play();
+                    break;
+                }
+            }
+        }
     }
 }
