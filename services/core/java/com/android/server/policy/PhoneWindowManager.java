@@ -204,7 +204,6 @@ import android.service.dreams.IDreamManager;
 import android.service.vr.IPersistentVrStateCallbacks;
 import android.speech.RecognizerIntent;
 import android.telecom.TelecomManager;
-import android.text.TextUtils;
 import android.util.Log;
 import android.util.MathUtils;
 import android.util.MutableBoolean;
@@ -1138,7 +1137,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.System.LOCKSCREEN_ENABLE_POWER_MENU), true, this,
                     UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.DOZE_TRIGGER_DOUBLETAP), false, this,
+                    "doze_trigger_doubletap"), false, this,
                     UserHandle.USER_ALL);
             updateSettings();
         }
@@ -2678,7 +2677,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 res.getBoolean(com.android.internal.R.bool.config_wakeOnDpadKeyPress);
 
         // Double-tap-to-doze
-        mNativeDoubleTapToDozeAvailable = !TextUtils.isEmpty(
+        mNativeDoubleTapToDozeAvailable = !android.text.TextUtils.isEmpty(
                 mContext.getResources().getString(R.string.config_dozeDoubleTapSensorType));
 
         // Init display burn-in protection
@@ -3481,10 +3480,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 org.lineageos.platform.internal.R.integer.config_deviceHardwareWakeKeys);
 
         // Double-tap-to-doze
-        mDoubleTapToWake = Settings.Secure.getInt(resolver,
-                Settings.Secure.DOUBLE_TAP_TO_WAKE, 0) == 1;
-        mDoubleTapToDoze = Settings.System.getInt(resolver,
-                Settings.System.DOZE_TRIGGER_DOUBLETAP, 0) == 1;
+        mDoubleTapToWake = Settings.Secure.getIntForUser(resolver,
+                Settings.Secure.DOUBLE_TAP_TO_WAKE, 0, UserHandle.USER_CURRENT) == 1;
+        mDoubleTapToDoze = Settings.System.getIntForUser(resolver,
+                "doze_trigger_doubletap", 0, UserHandle.USER_CURRENT) == 1;
 
         synchronized (mLock) {
             mEndcallBehavior = Settings.System.getIntForUser(resolver,
@@ -6273,7 +6272,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 if (mDoubleTapToWake && mDoubleTapToDoze && !mNativeDoubleTapToDozeAvailable) {
                     isWakeKey = false;
                     if (!down) {
-                        mContext.sendBroadcast(new Intent("com.android.systemui.doze.pulse"));
+                        Intent intent = new Intent("com.android.systemui.doze.pulse");
+                        intent.setPackage("com.android.systemui");
+                        mContext.sendBroadcastAsUser(intent, new UserHandle(UserHandle.USER_CURRENT));
                     }
                 } else {
                     isWakeKey = true;
