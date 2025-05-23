@@ -934,9 +934,9 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
         mWindowManager = windowManager;
         mWindowManagerProvider = windowManagerProvider;
         
-        ScreenAnimationController.INSTANCE().init(
+        ScreenAnimationController.INSTANCE().init(mContext,
             new AmbientDisplayConfiguration(mContext), 
-            (DisplayManager) context.getSystemService("display"));
+            (DisplayManager) mContext.getSystemService("display"));
         ScrimUtils.get().init(mKeyguardStateController);
         MediaViewController.Companion.init(mContext);
         
