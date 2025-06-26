@@ -19,17 +19,6 @@
         <item>RSA.CERT_3:</item>
       -->
      </string-array>
-
-     <!-- Charging info current divider, if needed -->
-    <integer name="config_currentInfoDivider" translatable="false">1000</integer>
-
-    <!-- Update battery info every second when device is charging -->
-    <bool name="config_alternateFastchargeInfoUpdate">false</bool>
-
-    <!-- On-The-Go -->
-    <integer name="quick_settings_onthego_dialog_short_timeout">3000</integer>
-    <integer name="quick_settings_onthego_dialog_long_timeout">6000</integer>
-
     
     <!-- Name of a font family to use as light font. For theming purpose. -->
     <string name="config_lightFontFamily" translatable="false">sans-serif-light</string>
