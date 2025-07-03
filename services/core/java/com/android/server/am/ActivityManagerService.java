@@ -19686,17 +19686,13 @@ public class ActivityManagerService extends IActivityManager.Stub
             }
 
             int topAppPid = topAppProc.getPid();
-            final boolean isGame = isTopAppGame(topApp);
-            int group = isGame
-                    ? Process.THREAD_GROUP_DEFAULT 
-                    : Process.THREAD_GROUP_BACKGROUND;
-            int priority = isGame 
-                    ? Process.THREAD_PRIORITY_DEFAULT 
-                    : Process.THREAD_PRIORITY_BACKGROUND;
+            int group = Process.THREAD_GROUP_DEFAULT;
+            int priority = Process.THREAD_PRIORITY_DEFAULT;
             try {
                 Process.setProcessGroup(topAppPid, group);
                 Process.setThreadGroupAndCpuset(topAppPid, group);
                 Process.setThreadPriority(topAppPid, priority);
+                setThreadAffinity(topAppPid, 1);
                 mTopAppPid = topAppPid;
             } catch (Exception e) {
                 Slog.w(TAG, "Failed to demote top-app process: " + e);
@@ -19709,6 +19705,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                     Process.setProcessGroup(mTopAppPid, Process.THREAD_GROUP_TOP_APP);
                     Process.setThreadGroupAndCpuset(mTopAppPid, Process.THREAD_GROUP_TOP_APP);
                     Process.setThreadPriority(mTopAppPid, Process.THREAD_PRIORITY_TOP_APP_BOOST);
+                    setThreadAffinity(mTopAppPid, 2);
                 } catch (Exception e) {
                     Slog.w(TAG, "Failed to restore top-app process group: " + e);
                 } finally {
@@ -19733,7 +19730,7 @@ public class ActivityManagerService extends IActivityManager.Stub
 
         int threadGroup = (affinity == 0)
                 ? Process.THREAD_GROUP_TOP_APP
-                : Process.THREAD_GROUP_BACKGROUND;
+                : Process.THREAD_GROUP_DEFAULT;
 
         Process.setThreadGroupAndCpuset(pid, threadGroup);
         Process.setThreadAffinity(pid, affinity);
