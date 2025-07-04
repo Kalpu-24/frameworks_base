@@ -421,6 +421,7 @@ public class NotificationMediaManager implements Dumpable {
             callbacks.get(i).onPrimaryMetadataOrStateChanged(mMediaMetadata, state);
             callbacks.get(i).setMediaNotificationColor(mColorExtractor.getMediaBackgroundColor());
             }
+            MediaSessionManager.Companion.get().onPlaybackStateChanged(state);
     }
 
     @Override
