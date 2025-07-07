@@ -52,11 +52,6 @@ public class ScrimUtils {
     private final KeyguardStateController.Callback mKeyguardStateCallback =
             new KeyguardStateController.Callback() {
                 @Override
-                public void onKeyguardShowingChanged() {
-                    notifyKeyguardShowingChanged(mKeyguardStateController.isShowing());
-                }
-
-                @Override
                 public void onKeyguardFadingAwayChanged() {
                     notifyKeyguardFadingAwayChanged(mKeyguardStateController.isKeyguardFadingAway());
                 }
@@ -147,6 +142,10 @@ public class ScrimUtils {
 
     private void notifyQsVisibilityChanged(boolean visible) {
         notifyListeners(listener -> listener.onQsVisibilityChanged(visible));
+    }
+    
+    public void setKeyguardShowing(boolean showing) {
+        notifyKeyguardShowingChanged(showing);
     }
 
     public void setExpandedFraction(float expandedFraction) {
