@@ -3635,6 +3635,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
     }
 
     private boolean startScrollIfNeeded(int x, int y, MotionEvent vtev) {
+        com.android.internal.util.BoostHelper.boostHint("Scrollboost", 300);
         // Check if we have moved far enough that it looks more like a
         // scroll than a tap
         final int deltaY = y - mMotionY;
@@ -4993,6 +4994,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                 clearScrollingCache();
             }
 
+            com.android.internal.util.BoostHelper.boostHint("Scrollboost", 300);
             int initialY = initialVelocity < 0 ? Integer.MAX_VALUE : 0;
             mLastFlingY = initialY;
             mScroller.setInterpolator(null);
@@ -5016,6 +5018,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         }
 
         void startSpringback() {
+            com.android.internal.util.BoostHelper.boostHint("Scrollboost", 300);
             mSuppressIdleStateChangeCall = false;
             if (mScroller.springBack(0, mScrollY, 0, 0, 0, 0)) {
                 mTouchMode = TOUCH_MODE_OVERFLING;
@@ -5028,6 +5031,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         }
 
         void startOverfling(int initialVelocity) {
+            com.android.internal.util.BoostHelper.boostHint("Scrollboost", 300);
             mScroller.setInterpolator(null);
             mScroller.fling(0, mScrollY, 0, initialVelocity, 0, 0,
                     Integer.MIN_VALUE, Integer.MAX_VALUE, 0, getHeight());
@@ -5061,6 +5065,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
 
         void startScroll(int distance, int duration, boolean linear,
                 boolean suppressEndFlingStateChangeCall) {
+            com.android.internal.util.BoostHelper.boostHint("Scrollboost", 300);
             int initialY = distance < 0 ? Integer.MAX_VALUE : 0;
             mLastFlingY = initialY;
             mScroller.setInterpolator(linear ? sLinearInterpolator : null);
