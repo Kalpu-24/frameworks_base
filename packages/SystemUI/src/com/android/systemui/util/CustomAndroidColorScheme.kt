@@ -36,7 +36,7 @@ class CustomAndroidColorScheme(private val context: Context) {
                  Settings.Global.DISABLE_WINDOW_BLURS, if (blurEnabledByDefault) 0 else 1) != 1
             val colorRes = if (blurEnabled) R.color.shade_tile_color else R.color.shade_tile_color_fallback
             val tileColor = context.resources.getColor(colorRes, context.theme)
-            val alpha = if (blurEnabled) 0.5f else 1f
+            val alpha = if (blurEnabled) 0.55f else 1f
             val tileColorAlpha = ColorUtils.setAlphaComponent(tileColor, (alpha * 255).toInt())
             return Color(tileColorAlpha)
         }
