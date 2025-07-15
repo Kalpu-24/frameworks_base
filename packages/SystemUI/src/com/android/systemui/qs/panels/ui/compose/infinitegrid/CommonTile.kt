@@ -350,10 +350,10 @@ private fun TileLabel(
 }
 
 object CommonTileDefaults {
-    val IconSize = 24.dp
-    val LargeTileIconSize = 24.dp
-    val SideIconWidth = 32.dp
-    val SideIconHeight = 20.dp
+    val IconSize = 26.dp
+    val LargeTileIconSize = 26.dp
+    val SideIconWidth = 33.dp
+    val SideIconHeight = 21.dp
     val ToggleTargetSize = 24.dp
     val TileStartPadding = 23.dp
     val TileEndPadding = 15.dp
@@ -361,7 +361,7 @@ object CommonTileDefaults {
     val TileLabelBlurWidth = 32.dp
     val TileDividerHeight = 16.dp
     val TilePaddingLarge = 10.dp
-    val InactiveCornerRadius = 100.dp
+    val InactiveCornerRadius = 50.dp
     val ActiveCornerRadius = 100.dp
     const val TILE_MARQUEE_ITERATIONS = 1
     const val TILE_INITIAL_DELAY_MILLIS = 2000
