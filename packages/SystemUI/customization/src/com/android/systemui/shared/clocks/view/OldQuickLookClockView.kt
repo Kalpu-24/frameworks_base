@@ -206,10 +206,7 @@ class OldQuickLookClockView @JvmOverloads constructor(
             val locale = Locale.getDefault()
             val instanceForSkeleton = DateFormat.getInstanceForSkeleton(this.datePattern, locale)
             instanceForSkeleton.setContext(DisplayContext.CAPITALIZATION_FOR_BEGINNING_OF_SENTENCE)
-            val date = this.currentTime
-            if (date != null) {
-                date.setTime(System.currentTimeMillis())
-            }
+            currentTime.setTime(System.currentTimeMillis())
             if (instanceForSkeleton != null) {
                 return instanceForSkeleton.format(this.currentTime)
             }
@@ -218,53 +215,45 @@ class OldQuickLookClockView @JvmOverloads constructor(
 
     private fun refreshInfo(calendar: CalendarSimpleData?, weather: NTWeatherData?) {
         val isJpLang = Locale.getDefault().language == "ja"
-        val fontFamily = if (isJpLang) "NDot77JPExtended" else "NDot55"
+        val fontFamily = if (isJpLang) "NDot77JPExtended" else "nothingdot"
         val textTypeface = Typeface.create(fontFamily, Typeface.NORMAL)
 
-        val temp = weather?.temp ?: Int.MIN_VALUE
-        val phrase = weather?.phrase ?: ""
-        val weatherIcon = WeatherUtils.getWeatherIcon(weather?.iconType ?: 0)
+        val temperature = weather?.temp ?: ""
+        val weatherCondition = weather?.condition ?: ""
+        val conditionCode = weather?.conditionCode ?: 0
+        val weatherIcon = WeatherUtils.getWeatherIcon(context, conditionCode)
 
-        val hasWeather = weather != null
-        val hasWeatherDetails = temp != Int.MIN_VALUE && phrase.isNotEmpty() && weatherIcon != 0
-        val hasCalendar = calendar?.isEventVisible() == true
+        val hasCalendarData = calendar != null && calendar != CalendarSimpleData.EMPTY
+        val showWeather = weather != null && weather != NTWeatherData.EMPTY 
+            && temperature.isNotEmpty() 
+            && weatherCondition.isNotEmpty() && conditionCode != 0
+        val showCalendar = hasCalendarData && calendar?.isEventVisible() == true
 
-        Log.d(getTag(), "refreshInfo hasCalendar:$hasCalendar hasWeather:$hasWeather")
-
-        if (hasCalendar) {
+        if (showCalendar) {
             calendarTitleTextView?.text = calendar.title ?: ""
-
-            val location = calendar.location ?: ""
-            var calenderWidgetTime = CalendarUtils.getCalendarWidgetTime(context, calendar)
+            val location = calendar.location.orEmpty()
+            var calTime = CalendarUtils.getCalendarWidgetTime(context, calendar)
             if (location.isNotBlank()) {
-                calenderWidgetTime += " $location"
+                calTime += " $location"
             }
-            calendarInfoTextView?.text = calenderWidgetTime
-
+            calendarInfoTextView?.text = calTime
             calendarContainerView?.visibility = View.VISIBLE
             weatherContainerView?.visibility = View.GONE
             placeholderTextView?.visibility = View.GONE
             dateContainerView?.visibility = View.GONE
-        } else if (hasWeather) {
-            if (hasWeatherDetails) {
-                val weatherText = "$temp° $phrase"
-                weatherIconView?.setImageResource(weatherIcon)
-                weatherTextView?.text = weatherText
-
-                weatherContainerView?.visibility = View.VISIBLE
-                placeholderTextView?.visibility = View.GONE
-            } else {
-                weatherContainerView?.visibility = View.GONE
-                placeholderTextView?.visibility = View.VISIBLE
-            }
-
-            dateContainerView?.visibility = View.VISIBLE
+        } else if (showWeather) {
+            val weatherText = "$temperature° $weatherCondition"
+            weatherIconView?.setImageDrawable(weatherIcon)
+            weatherTextView?.text = weatherText
             calendarContainerView?.visibility = View.GONE
-        } else {
+            weatherContainerView?.visibility = View.VISIBLE
             placeholderTextView?.visibility = View.GONE
             dateContainerView?.visibility = View.VISIBLE
+        } else {
             calendarContainerView?.visibility = View.GONE
             weatherContainerView?.visibility = View.GONE
+            placeholderTextView?.visibility = View.VISIBLE
+            dateContainerView?.visibility = View.VISIBLE
         }
 
         calendarTitleTextView?.includeFontPadding = false
@@ -274,7 +263,7 @@ class OldQuickLookClockView @JvmOverloads constructor(
         dateTextView?.includeFontPadding = true
         alarmInfoTextView?.includeFontPadding = true
 
-        clockTextView?.typeface = Typeface.create("NDot57", Typeface.NORMAL)
+        clockTextView?.typeface = Typeface.create("nothingdot57", Typeface.NORMAL)
 
         val infoTextViews = listOf(
             calendarTitleTextView,
@@ -292,7 +281,6 @@ class OldQuickLookClockView @JvmOverloads constructor(
     }
 
     override fun onAlarmDataChanged(data: AlarmData) {
-        if (data == null) return
         super.onAlarmDataChanged(data)
         val withinHours = withinNHoursLocked(data, alarmVisibilityHours)
         val nextAlarmMillis = data.nextAlarmMillis ?: 0L
@@ -312,13 +300,11 @@ class OldQuickLookClockView @JvmOverloads constructor(
     }
 
     override fun onNTWeatherDataChanged(data: NTWeatherData) {
-        if (data == weatherData) return
         weatherData = data
         refreshInfo(calendarData, weatherData)
     }
 
     override fun onCalendarDataChanged(data: CalendarSimpleData) {
-        if (data == calendarData) return
         calendarData = data
         refreshInfo(calendarData, weatherData)
     }

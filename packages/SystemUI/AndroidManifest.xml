@@ -434,6 +434,11 @@
     <protected-broadcast android:name="com.google.android.systemui.smartspace.ENABLE_UPDATE"/>
     <protected-broadcast android:name="com.google.android.systemui.smartspace.EXPIRE_EVENT"/>
 
+    <!-- Weather/Calendar events -->
+    <uses-permission android:name="org.omnirom.omnijaws.READ_WEATHER" />
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+
     <application
         android:name=".SystemUIApplication"
         android:persistent="true"

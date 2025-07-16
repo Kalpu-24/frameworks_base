@@ -263,7 +263,7 @@ constructor(
         return isLightTheme.data == 0
     }
     
-    private fun onUiModeChanged() {
+    private fun onClockUiModeChanged() {
         clock?.run { events.onUiModeChanged(isDarkTheme()) }
     }
 
@@ -345,7 +345,7 @@ constructor(
             }
             
             override fun onUiModeChanged() {
-                onUiModeChanged()
+                onClockUiModeChanged()
             }
         }
 

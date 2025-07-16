@@ -131,6 +131,7 @@ import com.android.systemui.biometrics.AuthController;
 import com.android.systemui.biometrics.FingerprintInteractiveToAuthProvider;
 import com.android.systemui.bouncer.domain.interactor.AlternateBouncerInteractor;
 import com.android.systemui.broadcast.BroadcastDispatcher;
+import com.android.systemui.calendar.CalendarManager;
 import com.android.systemui.communal.domain.interactor.CommunalSceneInteractor;
 import com.android.systemui.dagger.SysUISingleton;
 import com.android.systemui.dagger.qualifiers.Background;
@@ -152,7 +153,7 @@ import com.android.systemui.keyguard.domain.interactor.KeyguardServiceShowLocksc
 import com.android.systemui.keyguard.domain.interactor.ShowWhileAwakeReason;
 import com.android.systemui.keyguard.shared.constants.TrustAgentUiEvent;
 import com.android.systemui.log.SessionTracker;
-import com.android.systemui.plugins.clocks.WeatherData;
+import com.android.systemui.plugins.clocks.*;
 import com.android.systemui.plugins.statusbar.StatusBarStateController;
 import com.android.systemui.res.R;
 import com.android.systemui.scene.domain.interactor.SceneInteractor;
@@ -170,6 +171,7 @@ import com.android.systemui.telephony.TelephonyListenerManager;
 import com.android.systemui.user.domain.interactor.SelectedUserInteractor;
 import com.android.systemui.util.Assert;
 import com.android.systemui.util.kotlin.JavaAdapter;
+import com.android.systemui.weather.WeatherManager;
 
 import dalvik.annotation.optimization.NeverCompile;
 
@@ -467,6 +469,30 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, CoreSt
     public boolean isPocketLockVisible(){
         return mPocketManager.isPocketLockVisible();
     }
+
+    private final WeatherManager.Callback mWeatherCallback = new WeatherManager.Callback() {
+        @Override
+        public void onWeatherUpdated(NTWeatherData data) {
+            for (int i = 0; i < mCallbacks.size(); i++) {
+                KeyguardUpdateMonitorCallback cb = mCallbacks.get(i).get();
+                if (cb != null) {
+                    cb.onNTWeatherDataChanged(data);
+                }
+            }
+        }
+    };
+
+    private final CalendarManager.Callback mCalendarCallback = new CalendarManager.Callback() {
+        @Override
+        public void onCalendarDataChanged(CalendarSimpleData data) {
+            for (int i = 0; i < mCallbacks.size(); i++) {
+                KeyguardUpdateMonitorCallback cb = mCallbacks.get(i).get();
+                if (cb != null) {
+                    cb.onCalendarDataChanged(data);
+                }
+            }
+        }
+    };
 
     private final IBiometricEnabledOnKeyguardCallback mBiometricEnabledCallback =
             new IBiometricEnabledOnKeyguardCallback.Stub() {
@@ -859,6 +885,15 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, CoreSt
 
         if (occlusionChanged || showingChanged) {
             updateFingerprintListeningState(BIOMETRIC_ACTION_UPDATE);
+        }
+
+        if (!showingChanged) return;
+        if (mKeyguardShowing) {
+            CalendarManager.Companion.get().addCallback(mCalendarCallback);
+            WeatherManager.Companion.get().addCallback(mWeatherCallback);
+        } else {
+            WeatherManager.Companion.get().removeCallback(mWeatherCallback);
+            CalendarManager.Companion.get().removeCallback(mCalendarCallback);
         }
     }
 
@@ -2296,6 +2331,9 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, CoreSt
         mSceneInteractor = sceneInteractor;
         mCommunalSceneInteractor = communalSceneInteractor;
         mKeyguardServiceShowLockscreenInteractor = keyguardServiceShowLockscreenInteractor;
+        
+        CalendarManager.Companion.init(context);
+        WeatherManager.Companion.init(context);
 
         mPocketManager = (PocketManager) context.getSystemService(Context.POCKET_SERVICE);
         if (mPocketManager != null) {

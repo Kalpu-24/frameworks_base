@@ -76,7 +76,7 @@ class GeneralClockView @JvmOverloads constructor(
         val showCalendar = isEventVisible && hasTitle
 
         val scale = scaleRatio
-        val topPadding = resources.getDimension(R.dimen.clock_padding_top) * scale
+        val topPadding = resources.getDimension(R.dimen.clock_general_padding_top) * scale
         val horizontalPadding = resources.getDimension(R.dimen.clock_padding_horizontal) * scale
         val digitPadding = resources.getDimension(R.dimen.clock_padding) * scale
         val dotSize = resources.getDimension(R.dimen.dot_small_size) * scale
@@ -135,7 +135,6 @@ class GeneralClockView @JvmOverloads constructor(
     }
 
     override fun onCalendarDataChanged(data: CalendarSimpleData) {
-        if (calendarData == data) return
         calendarData = data
         refreshInfo(calendarData, weatherData)
     }
@@ -160,16 +159,17 @@ class GeneralClockView @JvmOverloads constructor(
         val dimension5 = resources.getDimension(R.dimen.clock_text_secondary_size) * scale
         val screenWidth = resources.displayMetrics.widthPixels
         val availableWidth = (screenWidth - (dimension * 2)).toInt()
-        val desiredHeight = (resources.getDimension(R.dimen.clock_height) * scale).toInt()
+        val desiredHeight = (resources.getDimension(R.dimen.clock_general_height) * scale).toInt()
 
         val containerLayout = findViewById<RelativeLayout>(R.id.container_layout)
         containerLayout?.let {
-            it.setPadding(
-                0,
-                (it.resources.getDimension(R.dimen.clock_padding_top) * scale).toInt(),
-                0,
-                (it.resources.getDimension(R.dimen.clock_padding_bottom) * scale).toInt()
-            )
+            it.setPadding(0, 0, 0, 0)
+            val lp = it.layoutParams as? ViewGroup.MarginLayoutParams
+            lp?.let { params ->
+                val topMargin = resources.getDimension(R.dimen.clock_general_container_top_margin)
+                params.topMargin = (topMargin * scaleRatio).toInt()
+                it.layoutParams = params
+            }
             it.layoutParams = it.layoutParams.apply {
                 width = availableWidth
                 height = desiredHeight
@@ -202,7 +202,6 @@ class GeneralClockView @JvmOverloads constructor(
     }
 
     override fun onNTWeatherDataChanged(data: NTWeatherData) {
-        if (weatherData == data) return
         weatherData = data
         refreshInfo(calendarData, weatherData)
     }
@@ -227,57 +226,63 @@ class GeneralClockView @JvmOverloads constructor(
     }
 
     private fun refreshInfo(calendar: CalendarSimpleData?, weather: NTWeatherData?) {
-        val temp = weather?.temp ?: Int.MIN_VALUE
-        var title = ""
-        var location = weather?.phrase ?: ""
+        val temp = weather?.temp ?: ""
+        val conditionCode = weather?.conditionCode ?: 0
 
         val isEventVisible = calendar?.isEventVisible() == true
-        val hasTitle = !calendar?.title.isNullOrEmpty()
-        val hasLocation = !calendar?.location.isNullOrEmpty()
+        val title = calendar?.title ?: ""
 
-        val infoText: String = when {
-            isEventVisible -> CalendarUtils.getCalendarDescription(context, calendar!!)
-            temp != Int.MIN_VALUE -> "$temp°"
-            else -> ""
+        val hasCalendarData = calendar != null && calendar != CalendarSimpleData.EMPTY
+        val showCalendar = hasCalendarData && isEventVisible && title != ""
+
+        val hasValidWeatherData = temp != "" && conditionCode != 0
+        val hasWeatherData = weather != null && weather != NTWeatherData.EMPTY && hasValidWeatherData
+
+        val showWeather = !showCalendar && hasWeatherData
+
+        val showPlaceholder = !showCalendar && !showWeather
+
+        val infoText: String = if (showCalendar) {
+            CalendarUtils.getCalendarDescription(context, calendar!!)
+        } else if (showWeather) {
+            "$temp°"
+        } else {
+            ""
         }
 
-        if (isEventVisible) {
-            location = calendar?.location ?: ""
+        val location = if (showCalendar) {
+            calendar?.location ?: ""
+        } else {
+            weather?.condition ?: ""
         }
-
-        if (isEventVisible && hasTitle) {
-            title = calendar?.title ?: ""
-        }
-
-        val isPlaceholderVisible = infoText.isEmpty() && location.isEmpty() && title.isNotEmpty()
 
         val majorSize = resources.getDimension(R.dimen.clock_text_major_size) * scaleRatio
         val secondarySize = resources.getDimension(R.dimen.clock_text_secondary_size) * scaleRatio
         val primaryPadding = (resources.getDimension(R.dimen.clock_content_primary_padding) * scaleRatio).toInt()
 
         findViewById<ViewGroup>(R.id.info_bottom_container_layout)?.visibility =
-            if (isPlaceholderVisible) View.GONE else View.VISIBLE
+            if (showPlaceholder) View.GONE else View.VISIBLE
 
         findViewById<TextView>(R.id.info_placeholder_text_view)?.apply {
-            visibility = if (isPlaceholderVisible) View.VISIBLE else View.GONE
+            visibility = if (showPlaceholder) View.VISIBLE else View.GONE
         }
 
         findViewById<ImageView>(R.id.weather_icon_view)?.apply {
-            visibility = if (!isEventVisible && !isPlaceholderVisible) View.VISIBLE else View.GONE
-            setImageResource(WeatherUtils.getWeatherIcon(weather?.iconType ?: 0))
+            visibility = if (showWeather) View.VISIBLE else View.GONE
+            setImageDrawable(WeatherUtils.getWeatherIcon(context, conditionCode))
         }
 
         findViewById<TextView>(R.id.info_front_text_view)?.apply {
             text = infoText
-            textSize = if (title.isEmpty()) majorSize else secondarySize
+            setTextSize(0, if (title == "") majorSize else secondarySize)
         }
 
         findViewById<TextView>(R.id.info_rear_text_view)?.apply {
             text = location
-            textSize = if (title.isNotEmpty()) secondarySize else majorSize
-            val layoutParams = layoutParams as? LinearLayout.LayoutParams
-            layoutParams?.setMarginStart(if (isEventVisible) primaryPadding else 0)
-            this.layoutParams = layoutParams
+            setTextSize(0, if (title == "") secondarySize else majorSize)
+            val lp = layoutParams as? LinearLayout.LayoutParams
+            lp?.setMarginStart(if (showCalendar) primaryPadding else 0)
+            layoutParams = lp
         }
 
         findViewById<TextView>(R.id.info_top_text_view)?.text = title

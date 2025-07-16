@@ -90,6 +90,10 @@ abstract class NTClockView @JvmOverloads constructor(
         isDoze = false
         isScreenOff = false
         refreshColor()
+        clockHandler.postDelayed({
+            refreshTime()
+            postInvalidateOnAnimation()
+        }, 1250)
     }
 
     fun onScreenOff(screenOff: Boolean) {
@@ -164,20 +168,19 @@ abstract class NTClockView @JvmOverloads constructor(
     fun getDateHeight(): Int {
         val className = this::class.simpleName ?: return 0
         val config = clockConfigMap[className] ?: return 0
-
         if (!config.visible) return 0
 
         val textSize = resources.getDimension(R.dimen.clock_date_text_size)
 
+        val marginTop = config.customDateMarginTop?.let {
+            resources.getDimension(it)
+        } ?: resources.getDimension(R.dimen.clock_date_margin_top)
+
+        val paddingTop = resources.getDimension(R.dimen.clock_padding_top)
+
         return when (config.position) {
-            Position.ABOVE -> {
-                val marginTop = resources.getDimension(R.dimen.clock_date_margin_top)
-                val paddingTop = resources.getDimension(R.dimen.clock_padding_top)
-                ((textSize + marginTop + paddingTop) * scaleRatio).toInt()
-            }
-            Position.BELOW -> {
-                (textSize * scaleRatio).toInt()
-            }
+            Position.ABOVE -> ((textSize + marginTop + paddingTop) * scaleRatio).toInt()
+            Position.BELOW -> (textSize * scaleRatio).toInt()
         }
     }
 
@@ -204,23 +207,28 @@ abstract class NTClockView @JvmOverloads constructor(
         val className = this::class.simpleName ?: return
         val config = clockConfigMap[className] ?: return
         if (!config.visible || dateStr.isEmpty()) return
+
         val x = when (config.align) {
-            Align.LEFT -> resources.getDimension(R.dimen.clock_padding_start)
+            Align.LEFT   -> resources.getDimension(R.dimen.clock_padding_start)
             Align.CENTER -> width / 2f
         }
+
+        val topMargin: Float = config.customDateMarginTop?.let {
+            resources.getDimension(it)
+        } ?: resources.getDimension(R.dimen.clock_date_margin_top)
+
         val y = when (config.position) {
-            Position.ABOVE -> {
-                resources.getDimension(R.dimen.clock_date_margin_top) * scaleRatio +
+            Position.ABOVE ->
+                (topMargin * scaleRatio) + datePaint.textSize
+            Position.BELOW ->
+                height -
+                (resources.getDimension(R.dimen.clock_date_margin_top) * scaleRatio) -
                 datePaint.textSize
-            }
-            Position.BELOW -> {
-                height - resources.getDimension(R.dimen.clock_date_margin_top) * scaleRatio -
-                datePaint.textSize
-            }
         }
+
         datePaint.color = getClockColor()
         datePaint.textAlign = when (config.align) {
-            Align.LEFT -> Paint.Align.LEFT
+            Align.LEFT   -> Paint.Align.LEFT
             Align.CENTER -> Paint.Align.CENTER
         }
         canvas.drawText(dateStr, x, y, datePaint)
@@ -276,14 +284,15 @@ abstract class NTClockView @JvmOverloads constructor(
             val position: Position,
             val align: Align,
             val visible: Boolean = true,
-            val customHeightRes: Int? = null
+            val customHeightRes: Int? = null,
+            val customDateMarginTop: Int? = null
         )
 
         enum class Position { ABOVE, BELOW }
         enum class Align { LEFT, CENTER }
 
         private val clockConfigMap = mapOf(
-            "GeneralClockView" to ClockStyleConfig(Position.BELOW, Align.LEFT),
+            "GeneralClockView" to ClockStyleConfig(Position.ABOVE, Align.LEFT, customDateMarginTop = R.dimen.clock_general_date_top_margin, customHeightRes = R.dimen.clock_general_height),
             "GraphicClockView" to ClockStyleConfig(Position.ABOVE, Align.CENTER, visible = false),
             "LondonUGClockView" to ClockStyleConfig(Position.ABOVE, Align.CENTER, customHeightRes = R.dimen.center_clock_height),
             "NDotClockView" to ClockStyleConfig(Position.ABOVE, Align.CENTER, customHeightRes = R.dimen.center_clock_height),

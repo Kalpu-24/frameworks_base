@@ -16,7 +16,7 @@
             android:layout_height="wrap_content"
             android:singleLine="true"
             android:includeFontPadding="false"
-            android:fontFamily="ndot57"
+            android:fontFamily="nothingdot57"
             android:textFontWeight="700"/>
         <LinearLayout
             android:layout_gravity="left"
@@ -30,7 +30,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/clock_image_placeholder"
-                android:fontFamily="ndot"
+                android:fontFamily="nothingdot"
                 android:textFontWeight="400"/>
             <ImageView
                 android:layout_gravity="center_vertical"
@@ -56,7 +56,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/clock_old_quick_look_image_placeholder"
-            android:fontFamily="ndot"
+            android:fontFamily="nothingdot"
             android:textFontWeight="400"/>
         <LinearLayout
             android:layout_gravity="left"
@@ -91,7 +91,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:maxLines="1"
-                android:fontFamily="ndot"
+                android:fontFamily="nothingdot"
                 android:textFontWeight="400"/>
             <LinearLayout
                 android:orientation="horizontal"
@@ -104,7 +104,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:maxLines="1"
-                    android:fontFamily="ndot"
+                    android:fontFamily="nothingdot"
                     android:textFontWeight="400"/>
             </LinearLayout>
         </LinearLayout>
