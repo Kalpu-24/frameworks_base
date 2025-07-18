@@ -50,6 +50,7 @@ public class ScrimUtils {
     private boolean mQsVisible = false;
     private float mExpandedFraction = 0f;
     private int mBarState = -1;
+    private boolean mKeyguardShowing = true;
 
     private final KeyguardStateController.Callback mKeyguardStateCallback =
             new KeyguardStateController.Callback() {
@@ -147,6 +148,7 @@ public class ScrimUtils {
     }
     
     public void setKeyguardShowing(boolean showing) {
+        mKeyguardShowing = showing;
         notifyKeyguardShowingChanged(showing);
     }
     
@@ -186,7 +188,7 @@ public class ScrimUtils {
     }
 
     public boolean isKeyguardShowing() {
-        return mBarState == KEYGUARD;
+        return mKeyguardShowing || mBarState == KEYGUARD;
     }
 
     public boolean isPanelFullyCollapsed() {

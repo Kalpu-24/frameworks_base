@@ -169,6 +169,7 @@ import com.android.systemui.plugins.PluginManager;
 import com.android.systemui.plugins.qs.QS;
 import com.android.systemui.plugins.statusbar.StatusBarStateController;
 import com.android.systemui.power.domain.interactor.PowerInteractor;
+import com.android.systemui.pulse.*;
 import com.android.systemui.qs.QSFragmentLegacy;
 import com.android.systemui.qs.QSPanelController;
 import com.android.systemui.qs.composefragment.QSFragmentCompose;
@@ -1188,6 +1189,9 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
                         mNotificationShadeWindowController.setRequestTopUi(
                                 requestTopUi, componentTag))));
         getNotifContainerParentView().addView(MediaViewController.Companion.get().getMediaArtScrim(), 0);
+        
+        PulseViewController.Companion.init(mContext);
+        getNotifContainerParentView().addView(PulseViewController.Companion.get().getPulseView(), 1);
     }
 
     private ViewGroup getNotifContainerParentView() {
