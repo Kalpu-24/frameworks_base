@@ -2886,6 +2886,7 @@ public final class NotificationPanelViewController implements
      *                         gesture), we always play haptic.
      */
     private void maybeVibrateOnOpening(boolean openingWithTouch) {
+        com.android.internal.util.BoostHelper.boostHint("Flingboost", 300);
         if (mVibrateOnOpening && mBarState != KEYGUARD && mBarState != SHADE_LOCKED) {
             if (!openingWithTouch || !mHasVibratedOnOpen) {
                 performHapticFeedback(HapticFeedbackConstants.GESTURE_START);
