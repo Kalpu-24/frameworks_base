@@ -35,6 +35,8 @@ public class ScrimUtils {
         default void onExpandedFractionChanged(float expandedFraction) {}
         default void onBarStateChanged(int state) {}
         default void onQsVisibilityChanged(boolean visible) {}
+        default void onStartedWakingUp() {}
+        default void onScreenTurnedOff() {}
     }
 
     private static ScrimUtils instance;
@@ -146,6 +148,14 @@ public class ScrimUtils {
     
     public void setKeyguardShowing(boolean showing) {
         notifyKeyguardShowingChanged(showing);
+    }
+    
+    public void onStartedWakingUp() {
+        notifyListeners(listener -> listener.onStartedWakingUp());
+    }
+
+    public void onScreenTurnedOff() {
+        notifyListeners(listener -> listener.onScreenTurnedOff());
     }
 
     public void setExpandedFraction(float expandedFraction) {
