@@ -448,7 +448,17 @@ class MediaViewController private constructor(
             onMediaStateChanged()
         }
     }
+
+    override fun onScreenTurnedOff() {
+        cleanupResources()
+    }
     
+    override fun onStartedWakingUp() {
+        coroutineScope.launch {
+            onMediaStateChanged()
+        }
+    }
+
     fun retry() {
         mediaScrim.postDelayed({
             coroutineScope.launch {
