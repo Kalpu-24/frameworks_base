@@ -53,10 +53,6 @@ class MediaSessionManager private constructor() {
     fun onAlbumArtChanged(drawable: Drawable) {
         listenerManager.notify { it.onAlbumArtChanged(drawable) }
     }
-    
-    fun onMediaColorsChanged(color: Int) {
-        listenerManager.notify { it.onMediaColorsChanged(color) }
-    }
 
     fun onMediaColorsChanged(color: Int) {
         listenerManager.notify { it.onMediaColorsChanged(color) }
