@@ -67,4 +67,12 @@ class NTClockEvents(private val view: NTClockView) : ClockEvents {
     override fun onDateChanged() {
         view.onDateChanged()
     }
+    
+    override fun onMetadataChanged(track: String, artist: String) {
+        view.onMetadataChanged(track, artist)
+    }
+    
+    override fun onPlaybackStateChanged(playing: Boolean) {
+        view.onPlaybackStateChanged(playing)
+    }
 }

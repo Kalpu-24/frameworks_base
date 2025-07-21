@@ -25,8 +25,7 @@ import androidx.core.graphics.drawable.toBitmap
 import com.android.systemui.customization.R
 import com.android.systemui.plugins.clocks.CalendarSimpleData
 import com.android.systemui.plugins.clocks.NTWeatherData
-import com.android.systemui.shared.clocks.CalendarUtils
-import com.android.systemui.shared.clocks.WeatherUtils
+import com.android.systemui.shared.clocks.*
 import kotlin.Lazy
 import kotlin.LazyThreadSafetyMode
 import kotlin.math.max
@@ -225,6 +224,21 @@ class GeneralClockView @JvmOverloads constructor(
         )
     }
 
+    override fun onPlaybackStateChanged(playing: Boolean) {
+        super.onPlaybackStateChanged(playing)
+        refreshInfo(calendarData, weatherData)
+    }
+
+    override fun onMetadataChanged(track: String, artist: String) {
+        super.onMetadataChanged(track, artist)
+        refreshInfo(calendarData, weatherData)
+    }
+
+    override fun onDozeChanged(doze: Boolean) {
+        super.onDozeChanged(doze)
+        refreshInfo(calendarData, weatherData)
+    }
+
     private fun refreshInfo(calendar: CalendarSimpleData?, weather: NTWeatherData?) {
         val temp = weather?.temp ?: ""
         val conditionCode = weather?.conditionCode ?: 0
@@ -239,10 +253,18 @@ class GeneralClockView @JvmOverloads constructor(
         val hasWeatherData = weather != null && weather != NTWeatherData.EMPTY && hasValidWeatherData
 
         val showWeather = !showCalendar && hasWeatherData
+        
+        val nowPlaying = isPlaying && isDoze
 
-        val showPlaceholder = !showCalendar && !showWeather
+        val showPlaceholder = !showCalendar && !showWeather && !nowPlaying
 
-        val infoText: String = if (showCalendar) {
+        if (!isPlaying) {
+            NowPlayingIconBinder.get().stop()
+        }
+
+        val infoText: String = if (nowPlaying) {
+            ""
+        } else if (showCalendar) {
             CalendarUtils.getCalendarDescription(context, calendar!!)
         } else if (showWeather) {
             "$temp°"
@@ -250,7 +272,9 @@ class GeneralClockView @JvmOverloads constructor(
             ""
         }
 
-        val location = if (showCalendar) {
+        val secondaryText = if (nowPlaying) {
+            "$trackTitle - $artistName"
+        } else if (showCalendar) {
             calendar?.location ?: ""
         } else {
             weather?.condition ?: ""
@@ -267,9 +291,23 @@ class GeneralClockView @JvmOverloads constructor(
             visibility = if (showPlaceholder) View.VISIBLE else View.GONE
         }
 
-        findViewById<ImageView>(R.id.weather_icon_view)?.apply {
-            visibility = if (showWeather) View.VISIBLE else View.GONE
-            setImageDrawable(WeatherUtils.getWeatherIcon(context, conditionCode))
+        findViewById<ImageView>(R.id.weather_icon_view)?.let { weatherView ->
+            with(weatherView) {
+                when {
+                    nowPlaying -> {
+                        NowPlayingIconBinder.get().bindAndStart(this)
+                        visibility = View.VISIBLE
+                    }
+                    showWeather -> {
+                        setImageDrawable(WeatherUtils.getWeatherIcon(context, conditionCode))
+                        visibility = View.VISIBLE
+                    }
+                    else -> {
+                        setImageDrawable(null)
+                        visibility = View.GONE
+                    }
+                }
+            }
         }
 
         findViewById<TextView>(R.id.info_front_text_view)?.apply {
@@ -278,7 +316,7 @@ class GeneralClockView @JvmOverloads constructor(
         }
 
         findViewById<TextView>(R.id.info_rear_text_view)?.apply {
-            text = location
+            text = secondaryText
             setTextSize(0, if (title == "") secondarySize else majorSize)
             val lp = layoutParams as? LinearLayout.LayoutParams
             lp?.setMarginStart(if (showCalendar) primaryPadding else 0)

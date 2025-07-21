@@ -22,6 +22,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.Resources
 import android.os.Trace
+import android.provider.Settings
 import android.provider.Settings.Global.ZEN_MODE_IMPORTANT_INTERRUPTIONS
 import android.provider.Settings.Global.ZEN_MODE_OFF
 import android.text.format.DateFormat
@@ -52,6 +53,7 @@ import com.android.systemui.keyguard.shared.model.KeyguardState.LOCKSCREEN
 import com.android.systemui.keyguard.shared.model.TransitionState
 import com.android.systemui.lifecycle.repeatWhenAttached
 import com.android.systemui.log.core.Logger
+import com.android.systemui.media.MediaSessionManager
 import com.android.systemui.modes.shared.ModesUi
 import com.android.systemui.plugins.clocks.AlarmData
 import com.android.systemui.plugins.clocks.CalendarSimpleData
@@ -113,7 +115,7 @@ constructor(
     private val zenModeController: ZenModeController,
     private val zenModeInteractor: ZenModeInteractor,
     private val userTracker: UserTracker,
-) {
+): MediaSessionManager.MediaDataListener {
     var loggers =
         listOf(
                 clockBuffers.infraMessageBuffer,
@@ -311,6 +313,9 @@ constructor(
             updateColors()
         }
     }
+    
+    val nowPlayingEnabled: Boolean
+        get() = Settings.Secure.getInt(context.contentResolver, "nt_quicklook_np", 0) == 1
 
     var smallRegionSampler: RegionSampler? = null
         private set
@@ -519,6 +524,7 @@ constructor(
         batteryController.addCallback(batteryCallback)
         keyguardUpdateMonitor.registerCallback(keyguardUpdateMonitorCallback)
         zenModeController.addCallback(zenModeCallback)
+        MediaSessionManager.get().addListener(this)
         if (SceneContainerFlag.isEnabled) {
             handleDoze(
                 when {
@@ -567,6 +573,7 @@ constructor(
         batteryController.removeCallback(batteryCallback)
         keyguardUpdateMonitor.removeCallback(keyguardUpdateMonitorCallback)
         zenModeController.removeCallback(zenModeCallback)
+        MediaSessionManager.get().removeListener(this)
         smallRegionSampler?.stopRegionSampler()
         largeRegionSampler?.stopRegionSampler()
         smallTimeListener?.stop()
@@ -576,6 +583,26 @@ constructor(
             largeClock.view.removeOnAttachStateChangeListener(largeClockOnAttachStateChangeListener)
         }
         smallClockFrame?.viewTreeObserver?.removeOnGlobalLayoutListener(onGlobalLayoutListener)
+    }
+
+    override fun onPlaybackStateChanged(state: Int) {
+        val playing = MediaSessionManager.get().isMediaPlaying && nowPlayingEnabled
+        clock?.run { events.onPlaybackStateChanged(playing) }
+    }
+
+    override fun onMetadataChanged(track: String, artist: String) {
+        if (!nowPlayingEnabled) return
+        val powerManager = context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+        if (!powerManager.isInteractive) {
+            val pkg = context.packageName
+            val pulseIntent = Intent("$pkg.doze.pulse").apply {
+                setPackage(pkg)
+            }
+            context.sendBroadcast(pulseIntent)
+        }
+        clock?.run {
+            events.onMetadataChanged(track, artist)
+        }
     }
 
     fun setFallbackWeatherData(data: WeatherData) {

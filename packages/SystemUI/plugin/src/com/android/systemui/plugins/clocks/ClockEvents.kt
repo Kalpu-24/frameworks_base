@@ -50,4 +50,8 @@ interface ClockEvents {
     fun onCalendarDataChanged(data: CalendarSimpleData) {}
     
     fun onNTWeatherDataChanged(data: NTWeatherData) {}
+    
+    fun onMetadataChanged(track: String, artist: String) {}
+    
+    fun onPlaybackStateChanged(playing: Boolean) {}
 }

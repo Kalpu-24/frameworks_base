@@ -54,6 +54,9 @@ abstract class NTClockView @JvmOverloads constructor(
     var isDoze: Boolean = false
     var isScreenOff: Boolean = false
     var isRegionDark: Boolean = false
+    var isPlaying: Boolean = false
+    var trackTitle: String = ""
+    var artistName: String = ""
 
     val scaleRatio: Float = (TypedValues.CycleType.TYPE_EASING / resources.displayMetrics.densityDpi).toFloat()
 
@@ -76,10 +79,21 @@ abstract class NTClockView @JvmOverloads constructor(
         return if (isDoze || isScreenOff || isRegionDark) Color.WHITE else Color.BLACK
     }
 
+    open fun onPlaybackStateChanged(playing: Boolean) {
+        if (isPlaying != playing) {
+            isPlaying = playing
+        }
+    }
+
+    open fun onMetadataChanged(track: String, artist: String) {
+        trackTitle = track
+        artistName = artist
+    }
+
     fun setMessageBuffer(buffer: MessageBuffer) {
     }
 
-    fun onDozeChanged(doze: Boolean) {
+    open fun onDozeChanged(doze: Boolean) {
         if (isDoze != doze) {
             isDoze = doze
             refreshColor()

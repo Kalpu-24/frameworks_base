@@ -16,6 +16,7 @@ package com.android.systemui.shared.clocks.view
 import android.content.Context
 import android.content.res.Resources
 import android.graphics.*
+import android.graphics.drawable.AnimatedVectorDrawable
 import android.icu.text.DateFormat
 import android.icu.text.DisplayContext
 import android.os.Handler
@@ -65,6 +66,7 @@ class OldQuickLookClockView @JvmOverloads constructor(
 
     private val alarmIconView get() = findViewById<ImageView>(R.id.alarm_icon_view)
     private val weatherIconView get() = findViewById<ImageView>(R.id.weather_icon_view)
+    private val npIconView get() = findViewById<ImageView>(R.id.now_playing_icon)
 
     private val dateContainerView get() = findViewById<LinearLayout>(R.id.date_container_view)
     private val weatherContainerView get() = findViewById<View>(R.id.weather_container_view)
@@ -171,6 +173,15 @@ class OldQuickLookClockView @JvmOverloads constructor(
             }
         }
 
+        npIconView?.apply {
+            (layoutParams as? LinearLayout.LayoutParams)?.apply {
+                width = iconSize
+                height = iconSize
+                marginEnd = weatherPadding
+            }
+            setBottomMargin(infoPadding)
+        }
+
         calendarTitleTextView?.apply {
             setTextSize(0, secondaryTextSize)
             setBottomMargin(infoPadding)
@@ -229,7 +240,22 @@ class OldQuickLookClockView @JvmOverloads constructor(
             && weatherCondition.isNotEmpty() && conditionCode != 0
         val showCalendar = hasCalendarData && calendar?.isEventVisible() == true
 
-        if (showCalendar) {
+        if (!isPlaying) {
+            NowPlayingIconBinder.get().stop()
+            npIconView.setImageDrawable(null)
+            npIconView.visibility = View.GONE
+        }
+
+        if (isPlaying && isDoze) {
+            npIconView.visibility = View.VISIBLE
+            NowPlayingIconBinder.get().bindAndStart(npIconView)
+            calendarTitleTextView?.text = "$trackTitle"
+            calendarInfoTextView?.text = "$artistName"
+            calendarContainerView?.visibility = View.VISIBLE
+            weatherContainerView?.visibility = View.GONE
+            placeholderTextView?.visibility = View.GONE
+            dateContainerView?.visibility = View.GONE
+        } else if (showCalendar) {
             calendarTitleTextView?.text = calendar.title ?: ""
             val location = calendar.location.orEmpty()
             var calTime = CalendarUtils.getCalendarWidgetTime(context, calendar)
@@ -278,6 +304,21 @@ class OldQuickLookClockView @JvmOverloads constructor(
 
         refreshColor()
         refreshUI()
+    }
+
+    override fun onPlaybackStateChanged(playing: Boolean) {
+        super.onPlaybackStateChanged(playing)
+        refreshInfo(calendarData, weatherData)
+    }
+
+    override fun onMetadataChanged(track: String, artist: String) {
+        super.onMetadataChanged(track, artist)
+        refreshInfo(calendarData, weatherData)
+    }
+
+    override fun onDozeChanged(doze: Boolean) {
+        super.onDozeChanged(doze)
+        refreshInfo(calendarData, weatherData)
     }
 
     override fun onAlarmDataChanged(data: AlarmData) {
