@@ -16,7 +16,8 @@
 package com.android.systemui.media
 
 import android.graphics.drawable.Drawable
-import java.lang.ref.WeakReference
+import android.media.session.PlaybackState
+import android.media.MediaMetadata
 
 import com.android.systemui.util.WeakListenerManager
 
@@ -25,19 +26,42 @@ class MediaSessionManager private constructor() {
     interface MediaDataListener {
         fun onPlaybackStateChanged(state: Int) {}
         fun onAlbumArtChanged(drawable: Drawable) {}
+        fun onMediaColorsChanged(color: Int) {}
+        fun onMetadataChanged(track: String, artist: String) {}
     }
-    
+
     private val listenerManager = WeakListenerManager<MediaDataListener>()
+    var isMediaPlaying = false
+
+    private var _trackTitle: String = "Unknown"
+    private var _artist: String = "Unknown"
+
+    val trackTitle: String
+        get() = _trackTitle
+
+    val artist: String
+        get() = _artist
 
     fun addListener(listener: MediaDataListener) = listenerManager.addListener(listener)
     fun removeListener(listener: MediaDataListener) = listenerManager.removeListener(listener)
 
     fun onPlaybackStateChanged(state: Int) {
+        isMediaPlaying = state == PlaybackState.STATE_PLAYING
         listenerManager.notify { it.onPlaybackStateChanged(state) }
     }
 
     fun onAlbumArtChanged(drawable: Drawable) {
         listenerManager.notify { it.onAlbumArtChanged(drawable) }
+    }
+
+    fun onMediaColorsChanged(color: Int) {
+        listenerManager.notify { it.onMediaColorsChanged(color) }
+    }
+
+    fun onMetadataChanged(metadata: MediaMetadata) {
+        _trackTitle = metadata.getString(MediaMetadata.METADATA_KEY_TITLE) ?: "Unknown"
+        _artist = metadata.getString(MediaMetadata.METADATA_KEY_ARTIST) ?: "Unknown"
+        listenerManager.notify { it.onMetadataChanged(_trackTitle, _artist) }
     }
 
     companion object {
