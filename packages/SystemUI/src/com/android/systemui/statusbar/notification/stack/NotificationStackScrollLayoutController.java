@@ -34,9 +34,11 @@ import static com.android.systemui.statusbar.notification.stack.StackStateAnimat
 
 import android.animation.ObjectAnimator;
 import android.content.res.Configuration;
+import android.database.ContentObserver;
 import android.graphics.Point;
 import android.graphics.RenderEffect;
 import android.graphics.Shader;
+import android.os.Handler;
 import android.os.Trace;
 import android.os.UserHandle;
 import android.provider.Settings;
@@ -205,6 +207,7 @@ public class NotificationStackScrollLayoutController implements Dumpable {
     private HeadsUpAppearanceController mHeadsUpAppearanceController;
 
     private final NotificationTargetsHelper mNotificationTargetsHelper;
+    private ContentObserver mNotificationRowTransparencyObserver;
     private final SecureSettings mSecureSettings;
     private final NotificationDismissibilityProvider mDismissibilityProvider;
     private final ActivityStarter mActivityStarter;
@@ -232,6 +235,7 @@ public class NotificationStackScrollLayoutController implements Dumpable {
                     }
                     mStatusBarStateController.addCallback(
                             mStateListener, SysuiStatusBarStateController.RANK_STACK_SCROLLER);
+                    mView.getContext().getContentResolver().registerContentObserver(Settings.System.getUriFor("notification_row_transparency"), false, mNotificationRowTransparencyObserver, UserHandle.USER_CURRENT);
                 }
 
                 @Override
@@ -240,6 +244,7 @@ public class NotificationStackScrollLayoutController implements Dumpable {
                     mConfigurationController.removeCallback(mConfigurationListener);
                     mStatusBarStateController.removeCallback(mStateListener);
                     mTunerService.removeTunable(mTunable);
+                    mView.getContext().getContentResolver().unregisterContentObserver(mNotificationRowTransparencyObserver);
                 }
             };
 
@@ -924,6 +929,13 @@ public class NotificationStackScrollLayoutController implements Dumpable {
         mViewBinder.bindWhileAttached(mView, this);
 
         mView.setWallpaperInteractor(mWallpaperInteractor);
+
+        mNotificationRowTransparencyObserver = new ContentObserver(mView.getHandler()) {
+            @Override
+            public void onChange(boolean selfChange) {
+                updateNotificationRowTransparentBackgrounds();
+            }
+        };
     }
 
     private TunerService.Tunable mTunable = (key, newValue) -> {
@@ -950,6 +962,17 @@ public class NotificationStackScrollLayoutController implements Dumpable {
 
         return row.getVisibility() == View.VISIBLE;
     }
+
+    private void updateNotificationRowTransparentBackgrounds() {
+        for (int i = 0; i < mView.getChildCount(); i++) {
+            View child = mView.getChildAt(i);
+            if (child instanceof ExpandableNotificationRow) {
+                ((ExpandableNotificationRow) child).updateBackgroundColors();
+            }
+        }
+	NotificationShelf shelf = (NotificationShelf) mView.getShelf();
+        if (shelf != null) shelf.updateBackgroundColors();
+     }
 
     public void addOnExpandedHeightChangedListener(BiConsumer<Float, Float> listener) {
         mView.addOnExpandedHeightChangedListener(listener);
