@@ -60,6 +60,7 @@ import android.os.Handler;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.Settings;
+import android.provider.Settings.System;
 import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.util.ArraySet;
@@ -373,7 +374,7 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
                 jsonObject.put(OVERLAY_COLOR_SOURCE,
                         (flags == WallpaperManager.FLAG_LOCK) ? COLOR_SOURCE_LOCK
                                 : COLOR_SOURCE_HOME);
-                jsonObject.put(TIMESTAMP_FIELD, System.currentTimeMillis());
+                jsonObject.put(TIMESTAMP_FIELD, java.lang.System.currentTimeMillis());
                 if (DEBUG) {
                     Log.d(TAG, "Updating theme setting from "
                             + overlayPackageJson + " to " + jsonObject.toString());
@@ -528,6 +529,27 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
                     public void onChange(boolean selfChange, Collection<Uri> collection, int flags,
                             int userId) {
                         if (DEBUG) Log.d(TAG, "Overlay changed for user: " + userId);
+                        if (mUserTracker.getUserId() != userId) {
+                            return;
+                        }
+                        if (!mDeviceProvisionedController.isUserSetup(userId)) {
+                            Log.i(TAG, "Theme application deferred when setting changed.");
+                            mDeferredThemeEvaluation = true;
+                            return;
+                        }
+                        reevaluateSystemTheme(true /* forceReload */);
+                    }
+                },
+                UserHandle.USER_ALL);
+
+        mSecureSettings.registerContentObserverForUserSync(
+                System.getUriFor("dual_tone_shade_enabled"),
+                false,
+                new ContentObserver(mBgHandler) {
+                    @Override
+                    public void onChange(boolean selfChange, Collection<Uri> collection, int flags,
+                            int userId) {
+                        if (DEBUG) Log.d(TAG, "dual_tone_shade_enabled changed for user: " + userId);
                         if (mUserTracker.getUserId() != userId) {
                             return;
                         }
