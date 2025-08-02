@@ -36,9 +36,10 @@ public final class PermissionThread extends ServiceThread {
 
     private static final Object sLock = new Object();
 
-    private static volatile PermissionThread sInstance;
-    private static volatile Handler sHandler;
-    private static volatile HandlerExecutor sHandlerExecutor;
+    @GuardedBy("sLock")
+    private static PermissionThread sInstance;
+    private static Handler sHandler;
+    private static HandlerExecutor sHandlerExecutor;
 
     private PermissionThread() {
         super("android.perm", android.os.Process.THREAD_PRIORITY_DEFAULT, /* allowIo= */ true);
@@ -50,14 +51,13 @@ public final class PermissionThread extends ServiceThread {
             return;
         }
 
-        PermissionThread thread = new PermissionThread();
-        thread.start();
-        final Looper looper = thread.getLooper();
+        sInstance = new PermissionThread();
+        sInstance.start();
+        final Looper looper = sInstance.getLooper();
         looper.setTraceTag(Trace.TRACE_TAG_SYSTEM_SERVER);
         looper.setSlowLogThresholdMs(
                 SLOW_DISPATCH_THRESHOLD_MS, SLOW_DELIVERY_THRESHOLD_MS);
-        sInstance = thread;
-        sHandler = new Handler(looper);
+        sHandler = new Handler(sInstance.getLooper());
         sHandlerExecutor = new HandlerExecutor(sHandler);
     }
 
@@ -65,25 +65,20 @@ public final class PermissionThread extends ServiceThread {
      * Obtain a singleton instance of the PermissionThread.
      */
     public static PermissionThread get() {
-        if (sInstance == null) {
-            synchronized (sLock) {
-                ensureThreadLocked();
-            }
+        synchronized (sLock) {
+            ensureThreadLocked();
+            return sInstance;
         }
-        return sInstance;
     }
 
     /**
      * Obtain a singleton instance of a handler executing in the PermissionThread.
      */
     public static Handler getHandler() {
-        if (sHandler == null) {
-            synchronized (sLock) {
-                ensureThreadLocked();
-                return sHandler;
-            }
+        synchronized (sLock) {
+            ensureThreadLocked();
+            return sHandler;
         }
-        return sHandler;
     }
 
 
@@ -91,11 +86,9 @@ public final class PermissionThread extends ServiceThread {
      * Obtain a singleton instance of an executor of the PermissionThread.
      */
     public static Executor getExecutor() {
-        if (sHandlerExecutor == null) {
-            synchronized (sLock) {
-                ensureThreadLocked();
-            }
+        synchronized (sLock) {
+            ensureThreadLocked();
+            return sHandlerExecutor;
         }
-        return sHandlerExecutor;
     }
 }
