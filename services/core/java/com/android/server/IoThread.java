@@ -28,9 +28,9 @@ import java.util.concurrent.Executor;
  * (not waiting for data itself, but communicating with network daemons).
  */
 public final class IoThread extends ServiceThread {
-    private static volatile IoThread sInstance;
-    private static volatile Handler sHandler;
-    private static volatile HandlerExecutor sHandlerExecutor;
+    private static IoThread sInstance;
+    private static Handler sHandler;
+    private static HandlerExecutor sHandlerExecutor;
 
     private IoThread() {
         super("android.io", android.os.Process.THREAD_PRIORITY_DEFAULT, true /*allowIo*/);
@@ -38,39 +38,32 @@ public final class IoThread extends ServiceThread {
 
     private static void ensureThreadLocked() {
         if (sInstance == null) {
-            IoThread thread = new IoThread();
-            thread.start();
-            thread.getLooper().setTraceTag(Trace.TRACE_TAG_SYSTEM_SERVER);
-            sInstance = thread;
-            sHandler = makeSharedHandler(thread.getLooper());
+            sInstance = new IoThread();
+            sInstance.start();
+            sInstance.getLooper().setTraceTag(Trace.TRACE_TAG_SYSTEM_SERVER);
+            sHandler = makeSharedHandler(sInstance.getLooper());
             sHandlerExecutor = new HandlerExecutor(sHandler);
         }
     }
 
     public static IoThread get() {
-        if (sInstance == null) {
-            synchronized (IoThread.class) {
-                ensureThreadLocked();
-            }
+        synchronized (IoThread.class) {
+            ensureThreadLocked();
+            return sInstance;
         }
-        return sInstance;
     }
 
     public static Handler getHandler() {
-        if (sHandler == null) {
-            synchronized (IoThread.class) {
-                ensureThreadLocked();
-            }
+        synchronized (IoThread.class) {
+            ensureThreadLocked();
+            return sHandler;
         }
-        return sHandler;
     }
 
     public static Executor getExecutor() {
-        if (sHandlerExecutor == null) {
-            synchronized (IoThread.class) {
-                ensureThreadLocked();
-            }
+        synchronized (IoThread.class) {
+            ensureThreadLocked();
+            return sHandlerExecutor;
         }
-        return sHandlerExecutor;
     }
 }
