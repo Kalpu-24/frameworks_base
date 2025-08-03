@@ -67,6 +67,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.os.Trace;
+import android.os.UserHandle;
+import android.provider.Settings;
 import android.util.IndentingPrintWriter;
 import android.util.Log;
 import android.util.MathUtils;
@@ -1207,6 +1209,10 @@ public final class NotificationPanelViewController implements
     }
 
     private ClockSize computeDesiredClockSize() {
+        if (shouldForceSmallClock()) {
+            return ClockSize.SMALL;
+        }
+
         if (mSplitShadeEnabled) {
             return computeDesiredClockSizeForSplitShade();
         }
@@ -1229,6 +1235,11 @@ public final class NotificationPanelViewController implements
             return ClockSize.SMALL;
         }
         return ClockSize.LARGE;
+    }
+
+    private boolean shouldForceSmallClock() {
+        return Settings.Secure.getIntForUser(
+                mContentResolver, "lockscreen_widgets_enabled", 0, UserHandle.USER_CURRENT) != 0;
     }
 
     private void updateKeyguardStatusViewAlignment() {
