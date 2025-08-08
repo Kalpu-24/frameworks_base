@@ -15,46 +15,71 @@
  */
 package com.android.systemui.util
 
+import android.os.Handler
+import android.os.Looper
 import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.Executor
+import java.util.concurrent.Executors
 import java.util.function.Consumer
 
 class WeakListenerManager<T> {
 
     private val listeners = ConcurrentLinkedQueue<WeakReference<T>>()
+    private var onActive: (() -> Unit)? = null
+    private var onInactive: (() -> Unit)? = null
+    private var isActive = false
+
+    private val bgExecutor: Executor = Executors.newSingleThreadExecutor()
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     fun addListener(listener: T) {
-        for (ref in listeners) {
-            if (ref.get() === listener) return
-        }
+        if (listeners.any { it.get() === listener }) return
         listeners.add(WeakReference(listener))
+        cleanup()
+        if (!isActive && listeners.isNotEmpty()) {
+            isActive = true
+            onActive?.invoke()
+        }
     }
 
     fun removeListener(listener: T) {
-        val iterator = listeners.iterator()
-        while (iterator.hasNext()) {
-            val l = iterator.next().get()
-            if (l == null || l === listener) {
-                iterator.remove()
-            }
+        listeners.removeIf { it.get() == null || it.get() === listener }
+        cleanup()
+        if (isActive && listeners.isEmpty()) {
+            isActive = false
+            onInactive?.invoke()
         }
     }
 
     fun notify(action: (T) -> Unit) {
-        val iterator = listeners.iterator()
-        while (iterator.hasNext()) {
-            val ref = iterator.next()
-            val listener = ref.get()
-            if (listener != null) {
-                action(listener)
-            } else {
-                iterator.remove()
+        if (listeners.isEmpty()) return
+        bgExecutor.execute {
+            val snapshot = listeners
+                .mapNotNull { it.get() }
+                .toMutableList()
+            cleanup()
+            if (snapshot.isNotEmpty()) {
+                for (listener in snapshot) {
+                    mainHandler.post { action(listener) }
+                }
             }
         }
     }
 
-    @JvmOverloads
     fun notifyConsumer(action: Consumer<T>) {
         notify { action.accept(it) }
+    }
+
+    fun setLifecycleCallbacks(onActive: (() -> Unit)?, onInactive: (() -> Unit)?) {
+        this.onActive = onActive
+        this.onInactive = onInactive
+    }
+
+    fun size(): Int = listeners.count { it.get() != null }
+    fun isEmpty(): Boolean = size() == 0
+
+    private fun cleanup() {
+        listeners.removeIf { it.get() == null }
     }
 }
