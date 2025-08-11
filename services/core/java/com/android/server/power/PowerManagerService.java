@@ -769,6 +769,12 @@ public final class PowerManagerService extends SystemService
     @GuardedBy("mLock")
     private ScreenTimeoutOverridePolicy mScreenTimeoutOverridePolicy;
 
+    // wake / pulse doze on charge
+    static final int WAKE_ON_CHARGE_DISABLED = 0;
+    static final int WAKE_ON_CHARGE_ENABLED = 1;
+    static final int WAKE_ON_CHARGE_PULSE_DOZE = 2;
+    private int mWakeOnCharge;
+
     private final class DreamManagerStateListener implements
             DreamManagerInternal.DreamManagerStateListener {
         @Override
@@ -1602,6 +1608,9 @@ public final class PowerManagerService extends SystemService
         resolver.registerContentObserver(LineageSettings.System.getUriFor(
                 LineageSettings.System.FORCE_SHOW_NAVBAR),
                 false, mSettingsObserver, UserHandle.USER_ALL);
+        resolver.registerContentObserver(Settings.Secure.getUriFor(
+                Settings.Secure.WAKE_ON_CHARGE),
+                false, mSettingsObserver, UserHandle.USER_ALL);
 
         // Register for broadcasts from other components of the system.
         IntentFilter filter = new IntentFilter();
@@ -1723,7 +1732,11 @@ public final class PowerManagerService extends SystemService
         mAlwaysOnEnabled = mAmbientDisplayConfiguration.alwaysOnEnabledSetting(UserHandle.USER_CURRENT);
         mAlwaysOnChargingEnabled = mAmbientDisplayConfiguration.alwaysOnChargingEnabledSetting(
                     UserHandle.USER_CURRENT);
-
+        final int wakeOnChargeDefault = mWakeUpWhenPluggedOrUnpluggedConfig
+                ? WAKE_ON_CHARGE_ENABLED : WAKE_ON_CHARGE_DISABLED;
+        mWakeOnCharge = Settings.Secure.getIntForUser(resolver,
+                Settings.Secure.WAKE_ON_CHARGE, wakeOnChargeDefault, UserHandle.USER_CURRENT);
+                
         if (mSupportsDoubleTapWakeConfig) {
             boolean doubleTapWakeEnabled = Settings.Secure.getIntForUser(resolver,
                     Settings.Secure.DOUBLE_TAP_TO_WAKE, DEFAULT_DOUBLE_TAP_TO_WAKE,
@@ -2862,6 +2875,8 @@ public final class PowerManagerService extends SystemService
                         }
                     } else if (dockedOnWirelessCharger) {
                         mNotifier.onWirelessChargingStarted(mBatteryLevel, mUserId);
+                    } else { // unplugged
+                        mNotifier.onChargingStopped(mUserId);
                     }
                 }
             }
@@ -2877,7 +2892,7 @@ public final class PowerManagerService extends SystemService
     private boolean shouldWakeUpWhenPluggedOrUnpluggedLocked(
             boolean wasPowered, int oldPlugType, boolean dockedOnWirelessCharger) {
         // Don't wake when powered unless configured to do so.
-        if (!mWakeUpWhenPluggedOrUnpluggedConfig) {
+        if (mWakeOnCharge != WAKE_ON_CHARGE_ENABLED) {
             return false;
         }
 

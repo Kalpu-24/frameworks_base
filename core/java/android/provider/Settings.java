@@ -14395,6 +14395,17 @@ public final class Settings {
          * @hide
          */
         public static final String QS_SHOW_DATA_USAGE = "qs_show_data_usage";
+        
+        /**
+         * Whether to wake / doze the screen on chargin events (plug & unplug)
+         * Default should follow {@link com.android.internal.R.bool.config_unplugTurnsOnScreen}
+         * Possible values:
+         * 0 = Disabled
+         * 1 = Fully wake
+         * 2 = Pulse doze if available
+         * @hide
+         */
+        public static final String WAKE_ON_CHARGE = "wake_on_charge";
 
         /**
          * These entries are considered common between the personal and the managed profile,
