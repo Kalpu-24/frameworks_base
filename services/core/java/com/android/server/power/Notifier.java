@@ -104,6 +104,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @VisibleForTesting(visibility = VisibleForTesting.Visibility.PROTECTED)
 public class Notifier {
     private static final String TAG = "PowerManagerNotifier";
+    private static final String PULSE_ACTION = "com.android.systemui.doze.pulse";
 
     private static final boolean DEBUG = false;
 
@@ -120,6 +121,7 @@ public class Notifier {
     private static final int MSG_SCREEN_POLICY = 7;
     private static final int MSG_WIRED_CHARGING_DISCONNECTED = 8;
     private static final int MSG_WIRELESS_CHARGING_INTERRUPTED = 9;
+    private static final int MSG_CHARGING_STOPPED = 10;
 
     private static final long[] CHARGING_VIBRATION_TIME = {
             40, 40, 40, 40, 40, 40, 40, 40, 40, // ramp-up sampling rate = 40ms
@@ -171,6 +173,8 @@ public class Notifier {
 
     // True if the device should suspend when the screen is off due to proximity.
     private final boolean mSuspendWhenScreenOffDueToProximityConfig;
+
+    private final boolean mUnplugTurnsOnScreenConfig;
 
     // Encapsulates interactivity information about a particular display group.
     private static class Interactivity {
@@ -252,6 +256,8 @@ public class Notifier {
 
         mSuspendWhenScreenOffDueToProximityConfig = context.getResources().getBoolean(
                 com.android.internal.R.bool.config_suspendWhenScreenOffDueToProximity);
+        mUnplugTurnsOnScreenConfig = context.getResources().getBoolean(
+                com.android.internal.R.bool.config_unplugTurnsOnScreen);
 
         mFullWakeLockLog = mInjector.getWakeLockLog(context);
         mPartialWakeLockLog = mInjector.getWakeLockLog(context);
@@ -974,6 +980,21 @@ public class Notifier {
     }
 
     /**
+     * Called when wired / wireless charging has stopped - to provide user feedback
+     */
+    public void onChargingStopped(@UserIdInt int userId) {
+        if (DEBUG) {
+            Slog.d(TAG, "onChargingStopped");
+        }
+
+        mSuspendBlocker.acquire();
+        Message msg = mHandler.obtainMessage(MSG_CHARGING_STOPPED);
+        msg.setAsynchronous(true);
+        msg.arg1 = userId;
+        mHandler.sendMessage(msg);
+    }
+
+    /**
      * Called when the screen policy changes.
      */
     public void onScreenPolicyUpdate(int displayGroupId, int newPolicy) {
@@ -1158,8 +1179,25 @@ public class Notifier {
         }
     };
 
+    private void maybeDozeForCharge(@UserIdInt int userId) {
+        final int wakeOnChargeDefault = mUnplugTurnsOnScreenConfig
+                ? PowerManagerService.WAKE_ON_CHARGE_ENABLED
+                : PowerManagerService.WAKE_ON_CHARGE_DISABLED;
+        final boolean shouldDoze = Settings.Secure.getIntForUser(mContext.getContentResolver(),
+                Settings.Secure.WAKE_ON_CHARGE, wakeOnChargeDefault, userId)
+                == PowerManagerService.WAKE_ON_CHARGE_PULSE_DOZE;
+        if (!shouldDoze) {
+            return;
+        }
+        mBackgroundExecutor.execute(() -> {
+            final Intent intent = new Intent(PULSE_ACTION);
+            mContext.sendBroadcastAsUser(intent, UserHandle.CURRENT);
+        });
+    }
+
     private void playChargingStartedFeedback(@UserIdInt int userId, boolean wireless) {
 
+        maybeDozeForCharge(userId);
         if (!mIsPlayingChargingStartedFeedback.compareAndSet(false, true)) {
             // there's already a charging started feedback Runnable scheduled to run on the
             // background thread, so let's not execute another
@@ -1537,6 +1575,9 @@ public class Notifier {
                     break;
                 case MSG_SCREEN_POLICY:
                     screenPolicyChanging(msg.arg1, msg.arg2);
+                    break;
+                case MSG_CHARGING_STOPPED:
+                    maybeDozeForCharge(msg.arg1);
                     break;
             }
         }

@@ -311,5 +311,6 @@ public class SecureSettings {
         Settings.Secure.VPN_ENFORCE_DNS,
         Settings.Secure.EXTRA_DIM_AUTO_MODE,
         Settings.Secure.EXTRA_DIM_AUTO_TIME,
+        Settings.Secure.WAKE_ON_CHARGE,
     };
 }
