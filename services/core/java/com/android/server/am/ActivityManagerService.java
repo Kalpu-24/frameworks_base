@@ -5288,6 +5288,10 @@ public class ActivityManagerService extends IActivityManager.Stub
             ProcessList.startPsiMonitoringAfterBoot();
             initTaskProfiles();
             updateExtraFree();
+            
+            mHandler.postDelayed(() -> {
+                SystemProperties.set("persist.sys.axion_boot_completed", "1");
+            }, 5000);
 
             mUserController.onBootComplete(
                     new IIntentReceiver.Stub() {
