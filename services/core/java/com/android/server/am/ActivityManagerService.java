@@ -438,6 +438,7 @@ import com.android.internal.util.function.pooled.PooledLambda;
 import com.android.server.AlarmManagerInternal;
 import com.android.server.BootReceiver;
 import com.android.server.DeviceIdleInternal;
+import com.android.server.AnimationThread;
 import com.android.server.DisplayThread;
 import com.android.server.IoThread;
 import com.android.server.LocalManagerRegistry;
@@ -486,6 +487,7 @@ import com.android.server.wm.ActivityServiceConnectionsHolder;
 import com.android.server.wm.ActivityTaskSupervisor;
 import com.android.server.wm.ActivityTaskManagerInternal;
 import com.android.server.wm.ActivityTaskManagerService;
+import com.android.server.wm.SurfaceAnimationThread;
 import com.android.server.wm.WindowEventDispatcher;
 import com.android.server.wm.WindowManagerInternal;
 import com.android.server.wm.WindowManagerService;
@@ -7478,6 +7480,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                 mProcessStateController.setWakefulness(wakefulness);
 
                 updateOomAdjLocked(OOM_ADJ_REASON_UI_VISIBILITY);
+                mBoostAdjuster.onWakefulnessChanged(isAwake);
             }
         }
     }
@@ -19736,12 +19739,16 @@ public class ActivityManagerService extends IActivityManager.Stub
         private static final String ROOT_CGROUP_PROCS = "/dev/cpuctl/cgroup.procs";
         private static final String RESTRICTED_UCLAMP_MAX = "/dev/cpuctl/restricted/cpu.uclamp.max";
         private static final String RESTRICTED_UCLAMP_MIN = "/dev/cpuctl/restricted/cpu.uclamp.min";
+        private static final String DISPLAY_UCLAMP_MAX = "/dev/cpuctl/display/cpu.uclamp.max";
+        private static final String DISPLAY_UCLAMP_MIN = "/dev/cpuctl/display/cpu.uclamp.min";
         private static final String BG_CPUSET = SystemProperties.get("persist.sys.axion_cpu_bg", "0-3");
+        private static final String DISPLAY_CPUSET = SystemProperties.get("persist.sys.axion_cpu_display", "0-5");
         private static final String NT_FG_CPUSET = SystemProperties.get("persist.sys.axion_cpu_unlimit_ui", "0-7");
         private static final String BG_LIMIT = SystemProperties.get("persist.sys.axion_cpu_limit_bg", "0-1");
         private static final String FG_LIMIT = SystemProperties.get("persist.sys.axion_cpu_limit_ui", "0-2");
         private static final String ALL_CORES = SystemProperties.get("persist.sys.axion_cpu_unlimit_ui", "0-7");
         private static final String BIG_CORES = getCpuRange(SystemProperties.get("persist.sys.axion_cpu_big", "4,5,6,7"));
+        private static final String SF_UCLAMP_MIN_BOOST = SystemProperties.get("ro.surface_flinger.uclamp.min", "165");
 
         private int mTopAppPid = -1;
         private String currentReason = "";
@@ -19842,6 +19849,14 @@ public class ActivityManagerService extends IActivityManager.Stub
             }
             setFifoPriority(curProc, enabled, 99);
             boostRestricted(pid, enabled);
+            boostDisplayThreads(enabled);
+        }
+        
+        private void boostDisplayThreads(boolean enabled) {
+            int tg = enabled ? 9 : Process.THREAD_GROUP_TOP_APP; // top-app is restricted to small cores during animation boost
+            Process.setThreadGroupAndCpuset(DisplayThread.get().getThreadId(), tg);
+            Process.setThreadGroupAndCpuset(AnimationThread.get().getThreadId(), tg);
+            Process.setThreadGroupAndCpuset(SurfaceAnimationThread.get().getThreadId(), tg);
         }
 
         private void boostRestricted(int pid, boolean enable) {
@@ -19849,7 +19864,10 @@ public class ActivityManagerService extends IActivityManager.Stub
                 FileUtils.stringToFile(enable ? RESTRICTED_CGROUP_PROCS : ROOT_CGROUP_PROCS, String.valueOf(pid));
                 FileUtils.stringToFile(RESTRICTED_UCLAMP_MIN, enable ? "100" : "0");
                 FileUtils.stringToFile(RESTRICTED_UCLAMP_MAX, "100");
+                FileUtils.stringToFile(DISPLAY_UCLAMP_MIN, enable ? SF_UCLAMP_MIN_BOOST : "106");
+                FileUtils.stringToFile(DISPLAY_UCLAMP_MAX, "293");
                 executeAdjustCpusetCpus("/dev/cpuset/restricted/cpus", enable ? BIG_CORES : ALL_CORES);
+                executeAdjustCpusetCpus("/dev/cpuset/display/cpus", enable ? BIG_CORES : DISPLAY_CPUSET);
             } catch (Exception e) {
                 Slog.w(TAG, "Failed to " + (enable ? "enable" : "disable") + " restricted boost: " + e);
             }
@@ -19912,6 +19930,14 @@ public class ActivityManagerService extends IActivityManager.Stub
         private void disableBoostHint() {
             SystemProperties.set("dalvik.vm.dex2oat-threads", "3");
             setPerformanceMode(false, currentReason);
+        }
+        
+        public void onWakefulnessChanged(boolean awake) {
+            try {
+                FileUtils.stringToFile(DISPLAY_UCLAMP_MIN, awake ? "106" : "0");
+                FileUtils.stringToFile(DISPLAY_UCLAMP_MAX, awake ? "293" : "0");
+            } catch (Exception e) {
+            }
         }
     }
 }
