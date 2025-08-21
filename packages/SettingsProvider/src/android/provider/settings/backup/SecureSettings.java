@@ -307,10 +307,11 @@ public class SecureSettings {
         Settings.Secure.SELECTED_SPELL_CHECKER,
         // SELECTED_SPELL_CHECKER_SUBTYPE needs to be restored after SELECTED_SPELL_CHECKER
         Settings.Secure.SELECTED_SPELL_CHECKER_SUBTYPE,
-        // Evolution X additions
         Settings.Secure.VPN_ENFORCE_DNS,
         Settings.Secure.EXTRA_DIM_AUTO_MODE,
         Settings.Secure.EXTRA_DIM_AUTO_TIME,
         Settings.Secure.WAKE_ON_CHARGE,
+        Settings.Secure.QS_SHOW_DATA_USAGE,
+        Settings.Secure.QS_DATA_USAGE_CYCLE_TYPE,
     };
 }

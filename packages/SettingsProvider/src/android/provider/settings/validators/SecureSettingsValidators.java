@@ -510,5 +510,7 @@ public class SecureSettingsValidators {
         VALIDATORS.put(Secure.EXTRA_DIM_AUTO_TIME, TIME_RANGE_VALIDATOR);
         VALIDATORS.put(Secure.HIDE_APPLIST, ANY_STRING_VALIDATOR);
         VALIDATORS.put(Secure.WAKE_ON_CHARGE, new InclusiveIntegerRangeValidator(0, 2));
+        VALIDATORS.put(Secure.QS_SHOW_DATA_USAGE, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(Secure.QS_DATA_USAGE_CYCLE_TYPE, new InclusiveIntegerRangeValidator(0, 1));
     }
 }
