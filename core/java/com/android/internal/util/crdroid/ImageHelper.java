@@ -439,7 +439,7 @@ public class ImageHelper {
             scaledBitmap = Bitmap.createBitmap(scaledBitmap, 0, 0, scaledBitmap.getWidth(), scaledBitmap.getHeight(), matrix, true);
 
             out = new ByteArrayOutputStream();
-            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
+            scaledBitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 90, out);
 
             byte[] byteArray = out.toByteArray();
 
