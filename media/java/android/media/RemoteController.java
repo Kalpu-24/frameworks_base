@@ -127,12 +127,7 @@ import java.util.List;
                 .getSystemService(Context.MEDIA_SESSION_SERVICE);
         mSessionListener = new TopTransportSessionListener();
 
-        if (ActivityManager.isLowRamDeviceStatic()) {
-            mMaxBitmapDimension = MAX_BITMAP_DIMENSION;
-        } else {
-            final DisplayMetrics dm = context.getResources().getDisplayMetrics();
-            mMaxBitmapDimension = Math.max(dm.widthPixels, dm.heightPixels);
-        }
+        mMaxBitmapDimension = MAX_BITMAP_DIMENSION;
     }
 
 
