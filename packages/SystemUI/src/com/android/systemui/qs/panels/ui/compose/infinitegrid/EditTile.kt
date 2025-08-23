@@ -1028,7 +1028,7 @@ fun EditTile(
                 .graphicsLayer { this.alpha = alpha },
     ) {
         // Icon
-        Box(Modifier.size(ToggleTargetSize)) {
+        Box(Modifier.size(CommonTileDefaults.IconSize)) {
             SmallTileContent(
                 iconProvider = { tile.icon },
                 color = colors.icon,
