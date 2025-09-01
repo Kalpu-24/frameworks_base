@@ -1184,6 +1184,8 @@ public class UdfpsController implements DozeReceiver, Dumpable {
             }
             mUdfpsAnimProxy.show();
         }
+        
+        com.android.systemui.util.NTBoosterController.get().acquireUnlockAnimationBoost();
     }
 
     private void onFingerUp(long requestId, @NonNull View view) {
