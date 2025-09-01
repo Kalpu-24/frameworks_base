@@ -145,7 +145,7 @@ import com.android.systemui.util.Assert;
 import com.android.systemui.util.ColorUtilKt;
 import com.android.systemui.util.DumpUtilsKt;
 import com.android.systemui.util.ListenerSet;
-import com.android.systemui.util.NTCpuBindController;
+import com.android.systemui.util.NTBoosterController;
 import com.android.systemui.wallpapers.domain.interactor.WallpaperInteractor;
 
 import com.google.errorprone.annotations.CompileTimeConstant;
@@ -4226,7 +4226,6 @@ public class NotificationStackScrollLayout
             requestDisallowInterceptTouchEvent(true);
             cancelLongPress();
             resetExposedMenuView(true /* animate */, true /* force */);
-            NTCpuBindController.INSTANCE().animationBoostOn(NTCpuBindController.REQUEST_ANIMATION_BOOST_TYPE_TRACKING_NOTIFICATION_STACK_SCROLL_LAYOUT);
         } else {
             mSendingTouchesToSceneFramework = false;
         }
@@ -4429,12 +4428,13 @@ public class NotificationStackScrollLayout
         mPanelTracking = true;
         mAmbientState.setPanelTracking(true);
         resetExposedMenuView(true /* animate */, true /* force */);
+        NTBoosterController.get().acquireNotificationStackBoost();
     }
 
     void onPanelTrackingStopped() {
         mPanelTracking = false;
         mAmbientState.setPanelTracking(false);
-        NTCpuBindController.INSTANCE().animationBoostOff(NTCpuBindController.REQUEST_ANIMATION_BOOST_TYPE_TRACKING_NOTIFICATION_STACK_SCROLL_LAYOUT);
+        NTBoosterController.get().releaseNotificationStackBoost();
     }
 
     void resetScrollPosition() {
