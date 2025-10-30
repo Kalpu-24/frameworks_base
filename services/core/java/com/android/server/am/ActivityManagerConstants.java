@@ -2077,12 +2077,17 @@ final class ActivityManagerConstants extends ContentObserver {
 
     private void updateMaxCachedProcesses() {
         long physicalMemory = AxUtils.getPhysicalMemory();
-        if (physicalMemory >= AxUtils.MEM_8GB) {
-            CUR_MAX_CACHED_PROCESSES = 64;
-        } else if (physicalMemory >= AxUtils.MEM_6GB) {
-            CUR_MAX_CACHED_PROCESSES = 36;
+        boolean isSlmkEnabled = AxUtils.isSlmkEnabled();
+        if (isSlmkEnabled) {
+            CUR_MAX_CACHED_PROCESSES = 1024;
         } else {
-            CUR_MAX_CACHED_PROCESSES = 24;
+            if (physicalMemory >= AxUtils.MEM_8GB) {
+                CUR_MAX_CACHED_PROCESSES = 64;
+            } else if (physicalMemory >= AxUtils.MEM_6GB) {
+                CUR_MAX_CACHED_PROCESSES = 36;
+            } else {
+                CUR_MAX_CACHED_PROCESSES = 24;
+            }
         }
         CUR_MAX_EMPTY_PROCESSES = computeEmptyProcessLimit(CUR_MAX_CACHED_PROCESSES);
         final int rawMaxEmptyProcesses = computeEmptyProcessLimit(

@@ -108,6 +108,10 @@ public class AxUtils {
     public static boolean isBoosted() {
         return PERF_GOV.equals(scalingGov());
     }
+    
+    public static boolean isSlmkEnabled() {
+        return SystemProperties.getBoolean("ro.lmk.use_simple_lmk", false);
+    }
 
     public static String readBufFile(String path) {
         try (BufferedReader br = new BufferedReader(new FileReader(path))) {
