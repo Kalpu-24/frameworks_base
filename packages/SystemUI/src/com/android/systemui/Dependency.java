@@ -56,6 +56,7 @@ import com.android.systemui.statusbar.policy.DeviceProvisionedController;
 import com.android.systemui.statusbar.policy.KeyguardStateController;
 import com.android.systemui.statusbar.window.StatusBarWindowControllerStore;
 import com.android.systemui.tuner.TunerService;
+import com.android.systemui.util.ScrimUtils;
 
 import dagger.Lazy;
 
@@ -153,6 +154,7 @@ public class Dependency {
     @Inject Lazy<UserTracker> mUserTrackerLazy;
     @Inject Lazy<StatusBarWindowControllerStore> mStatusBarWindowControllerStoreLazy;
     @Inject Lazy<DozeScreenStateEx> mDozeScreenStateEx;
+    @Inject Lazy<ScrimUtils> mScrimUtils;
 
     @Inject
     public Dependency() {
@@ -201,6 +203,8 @@ public class Dependency {
                 StatusBarWindowControllerStore.class, mStatusBarWindowControllerStoreLazy::get);
         mProviders.put(
                 DozeScreenStateEx.class, mDozeScreenStateEx::get);
+        mProviders.put(
+                ScrimUtils.class, mScrimUtils::get);
         Dependency.setInstance(this);
     }
 
