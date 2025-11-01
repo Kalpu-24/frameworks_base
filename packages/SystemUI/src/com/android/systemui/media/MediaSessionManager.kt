@@ -15,6 +15,8 @@
  */
 package com.android.systemui.media
 
+import android.content.res.Resources
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.media.MediaMetadata
 import android.media.session.PlaybackState
@@ -63,6 +65,16 @@ class MediaSessionManager private constructor() {
         listenerManager.notify { it.onAlbumArtChanged(drawable) }
     }
 
+    fun onAlbumArtChanged(metadata: MediaMetadata) {
+        val albumArt = metadata.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
+            ?: metadata.getBitmap(MediaMetadata.METADATA_KEY_ART)
+        
+        if (albumArt != null) {
+            val drawable = BitmapDrawable(Resources.getSystem(), albumArt)
+            listenerManager.notify { it.onAlbumArtChanged(drawable) }
+        }
+    }
+
     fun onMediaColorsChanged(color: Int) {
         listenerManager.notify { it.onMediaColorsChanged(color) }
     }
@@ -70,11 +82,14 @@ class MediaSessionManager private constructor() {
     fun onMetadataChanged(metadata: MediaMetadata) {
         val newTitle = metadata.getString(MediaMetadata.METADATA_KEY_TITLE) ?: "Unknown"
         val newArtist = metadata.getString(MediaMetadata.METADATA_KEY_ARTIST) ?: "Unknown"
+        
         if (_trackTitle != newTitle || _artist != newArtist) {
             _trackTitle = newTitle
             _artist = newArtist
             listenerManager.notify { it.onMetadataChanged(_trackTitle, _artist) }
         }
+        
+        onAlbumArtChanged(metadata)
     }
 
     companion object {

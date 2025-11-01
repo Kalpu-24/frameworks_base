@@ -19,6 +19,7 @@ package com.android.systemui.qs.tiles;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.media.session.MediaController;
 import android.media.session.MediaSessionManager;
 import android.media.session.PlaybackState;
@@ -56,13 +57,15 @@ public class MediaInfoTile extends QSTileImpl<State>
     private static final String TAG = "MediaInfoTile";
     private static final int MAX_TEXT_LENGTH = 50;
 
-    private final Icon mIcon = ResourceIcon.get(R.drawable.ic_music_note);
+    private final Icon mDefaultIcon = ResourceIcon.get(R.drawable.ic_music_note);
     private final com.android.systemui.media.MediaSessionManager mMediaSessionManager;
     private final MediaSessionManager mSystemMediaSessionManager;
     private boolean mIsPlaying = false;
     private String mLastMediaPackage = null;
     private String mCachedTrack = null;
     private String mCachedArtist = null;
+    private Icon mCurrentIcon = null;
+    private Drawable mAlbumArt = null;
 
     @Inject
     public MediaInfoTile(
@@ -127,7 +130,12 @@ public class MediaInfoTile extends QSTileImpl<State>
         
         boolean hasMedia = mIsPlaying || (trackTitle != null && !trackTitle.equals("Unknown"));
         
-        state.icon = mIcon;
+        // Set icon - use app icon if available, otherwise default music note
+        if (mCurrentIcon != null) {
+            state.icon = mCurrentIcon;
+        } else {
+            state.icon = mDefaultIcon;
+        }
         
         if (!hasMedia) {
             state.state = Tile.STATE_UNAVAILABLE;
@@ -154,6 +162,12 @@ public class MediaInfoTile extends QSTileImpl<State>
             state.contentDescription = "Paused: " + trackTitle;
         } else {
             state.contentDescription = mContext.getString(R.string.quick_settings_media_info_no_music);
+        }
+        
+        // Store album art in state for custom rendering
+        // This will be used by Tile.kt to render custom background
+        if (mAlbumArt != null) {
+            state.sideViewCustomDrawable = mAlbumArt;
         }
     }
 
@@ -221,7 +235,37 @@ public class MediaInfoTile extends QSTileImpl<State>
     private void updateLastMediaPackage() {
         MediaController controller = getActiveMediaController();
         if (controller != null) {
-            mLastMediaPackage = controller.getPackageName();
+            String packageName = controller.getPackageName();
+            if (packageName != null && !packageName.equals(mLastMediaPackage)) {
+                mLastMediaPackage = packageName;
+                updateAppIcon(packageName);
+            }
+        } else {
+            mLastMediaPackage = null;
+            mCurrentIcon = null;
+        }
+    }
+
+    private void updateAppIcon(String packageName) {
+        if (packageName == null) {
+            mCurrentIcon = null;
+            return;
+        }
+        
+        try {
+            Drawable appIcon = 
+                    mContext.getPackageManager().getApplicationIcon(packageName);
+            // Create untinted drawable icon
+            mCurrentIcon = new DrawableIconWithRes(appIcon, 0) {
+                @Override
+                public Drawable getDrawable(Context context) {
+                    // Return the drawable without any tinting
+                    return appIcon;
+                }
+            };
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to load app icon for " + packageName, e);
+            mCurrentIcon = null;
         }
     }
 
@@ -255,5 +299,11 @@ public class MediaInfoTile extends QSTileImpl<State>
             updateLastMediaPackage();
             mHandler.post(() -> refreshState());
         }
+    }
+
+    @Override
+    public void onAlbumArtChanged(Drawable drawable) {
+        mAlbumArt = drawable;
+        mHandler.post(() -> refreshState());
     }
 }

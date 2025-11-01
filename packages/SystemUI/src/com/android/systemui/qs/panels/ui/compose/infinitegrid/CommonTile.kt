@@ -112,6 +112,7 @@ fun LargeTileContent(
     iconShape: RoundedCornerShape = RoundedCornerShape(CommonTileDefaults.TileCornerRadius),
     toggleClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
+    isMediaTile: Boolean = false,  // Add this parameter
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -173,7 +174,9 @@ fun LargeTileContent(
             modifier = Modifier.weight(1f),
         )
 
-        if (sideDrawable != null) {
+        // Only render sideDrawable as a side icon if it's NOT a media tile
+        // For media tiles, the album art is rendered as background in Tile.kt
+        if (sideDrawable != null && !isMediaTile) {
             Image(
                 painter = rememberDrawablePainter(sideDrawable),
                 contentDescription = null,
