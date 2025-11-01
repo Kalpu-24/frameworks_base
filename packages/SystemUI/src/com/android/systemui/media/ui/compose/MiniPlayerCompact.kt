@@ -124,7 +124,7 @@ fun MiniPlayerCompact(
                 .clip(shape)
                 .background(color = bgColor)
                 .border(width = 1.dp, color = borderColor, shape = shape)
-                .padding(horizontal = 16.dp, vertical = if (compact) 12.dp else 14.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -139,7 +139,7 @@ fun MiniPlayerCompact(
                         text = mediaState.title,
                         color = textColor,
                         style = MaterialTheme.typography.bodyLarge.copy(
-                            fontSize = if (compact) 14.sp else 16.sp
+                            fontSize = 14.sp
                         ),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -163,13 +163,13 @@ fun MiniPlayerCompact(
                     IconButton(
                         enabled = mediaState.hasActiveMedia && isInteractive,
                         onClick = { viewModel.skipToPrevious() },
-                        modifier = Modifier.size(if (compact) 44.dp else 48.dp)
+                        modifier = Modifier.size(44.dp)
                     ) {
                         Icon(
                             Icons.Default.SkipPrevious,
                             contentDescription = "Previous",
                             tint = iconTint,
-                            modifier = Modifier.size(if (compact) 24.dp else 28.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                     }
 
@@ -182,7 +182,7 @@ fun MiniPlayerCompact(
                             }
                         },
                         enabled = isInteractive,
-                        modifier = Modifier.size(if (compact) 44.dp else 48.dp),
+                        modifier = Modifier.size(44.dp),
                         colors = IconButtonDefaults.filledTonalIconButtonColors(
                             containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 1f)
                         )
@@ -195,20 +195,20 @@ fun MiniPlayerCompact(
                             },
                             contentDescription = "Play/Pause",
                             tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier = Modifier.size(if (compact) 24.dp else 28.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                     }
 
                     IconButton(
                         enabled = mediaState.hasActiveMedia && isInteractive,
                         onClick = { viewModel.skipToNext() },
-                        modifier = Modifier.size(if (compact) 44.dp else 48.dp)
+                        modifier = Modifier.size(44.dp)
                     ) {
                         Icon(
                             Icons.Default.SkipNext,
                             contentDescription = "Next",
                             tint = iconTint,
-                            modifier = Modifier.size(if (compact) 24.dp else 28.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }
