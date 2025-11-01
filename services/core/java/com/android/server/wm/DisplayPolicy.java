@@ -529,7 +529,6 @@ public class DisplayPolicy {
 
                 @Override
                 public void onVerticalFling(int duration) {
-                    BoostHelper.boostHint("scroll_fling", duration);
                 }
 
                 @Override

@@ -64,44 +64,29 @@ public final class DeviceData {
     }
 
     public void updateSettings(
-            boolean cpuBoost,
-            boolean bigBoost,
-            boolean primeBoost,
-            boolean sfBoost,
-            boolean inputBoost,
-            int fBoost,
-            int fBoostB,
-            int fBoostP,
             int uSMin,
             int uBMin,
             int uPMin,
             int uSMax,
             int uBMax,
             int uPMax,
-            int gGpuBoost,
-            int sGpuBoost
+            int gGpuBoost
     ) {
         data = new BoostData(
-                cpuBoost, bigBoost, primeBoost, sfBoost, inputBoost, cData.hasPrime,
+                cData.hasPrime,
                 cData.sCores, cData.bCores, cData.pCores, cData.boostCpus,
                 cData.sMin, cData.bMin, cData.pMin,
                 cData.sMax, cData.bMax, cData.pMax, cData.allCores,
-                s(fBoost), s(fBoostB), s(fBoostP),
                 s(uSMin), s(uBMin), s(uPMin),
                 s(uSMax), s(uBMax), s(uPMax),
                 cData.bgCpus, cData.fgCpus,
                 cData.bgLimit, cData.uiLimit,
-                gGpuBoost, sGpuBoost
+                gGpuBoost
         );
         logger("updateSettings: " + data);
     }
 
     public static class BoostData {
-        public final boolean cpuBoost;
-        public final boolean bigBoost;
-        public final boolean primeBoost;
-        public final boolean sfBoost;
-        public final boolean inputBoost;
         public final boolean hasPrime;
 
         public final String sCores;
@@ -116,9 +101,6 @@ public final class DeviceData {
         public final String pMax;
         public final String allCores;
 
-        public final String fBoost;
-        public final String fBoostB;
-        public final String fBoostP;
         public final String uSMin;
         public final String uBMin;
         public final String uPMin;
@@ -133,14 +115,8 @@ public final class DeviceData {
         public final String uiLimit;
         
         public final int gGpuBoost;
-        public final int sGpuBoost;
 
         public BoostData(
-                boolean cpuBoost,
-                boolean bigBoost,
-                boolean primeBoost,
-                boolean sfBoost,
-                boolean inputBoost,
                 boolean hasPrime,
                 String sCores,
                 String bCores,
@@ -153,9 +129,6 @@ public final class DeviceData {
                 String bMax,
                 String pMax,
                 String allCores,
-                String fBoost,
-                String fBoostB,
-                String fBoostP,
                 String uSMin,
                 String uBMin,
                 String uPMin,
@@ -166,14 +139,8 @@ public final class DeviceData {
                 String fgCpus,
                 String bgLimit,
                 String uiLimit,
-                int gGpuBoost,
-                int sGpuBoost
+                int gGpuBoost
         ) {
-            this.cpuBoost = cpuBoost;
-            this.bigBoost = bigBoost;
-            this.primeBoost = primeBoost;
-            this.sfBoost = sfBoost;
-            this.inputBoost = inputBoost;
             this.hasPrime = hasPrime;
 
             this.sCores = sCores;
@@ -188,9 +155,6 @@ public final class DeviceData {
             this.pMax = pMax;
             this.allCores = allCores;
 
-            this.fBoost = fBoost;
-            this.fBoostB = fBoostB;
-            this.fBoostP = fBoostP;
             this.uSMin = uSMin;
             this.uBMin = uBMin;
             this.uPMin = uPMin;
@@ -205,7 +169,6 @@ public final class DeviceData {
             this.uiLimit = uiLimit;
             
             this.gGpuBoost = gGpuBoost;
-            this.sGpuBoost = sGpuBoost;
         }
     }
 

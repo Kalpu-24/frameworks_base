@@ -70,8 +70,6 @@ public class BoostAdjuster implements IBoostAdjuster {
     private static final HashMap<String, Long> activeHints = new HashMap<>();
 
     private static final HashMap<String, String> sConfig = new HashMap<>();
-    private static final HashMap<String, String> sBoosts = new HashMap<>();
-    private static final HashMap<String, String> sMinFreqs = new HashMap<>();
     private static final HashMap<String, String> sRestrictBackgroundOn = new HashMap<>();
     private static final HashMap<String, String> sRestrictBackgroundOff = new HashMap<>();
     private static final HashMap<String, String> sDefaultsCpu = new HashMap<>();
@@ -92,12 +90,8 @@ public class BoostAdjuster implements IBoostAdjuster {
     private int mFreezeDuration = 600;
 
     private boolean mSystemReady = false;
-    private boolean mInputBoost = false;
-    private boolean mCpuBoost = false;
-    private boolean mSfBoost = false;
     
     private int mGameGpuBoost = 1;
-    private int mSysGpuBoost = 1;
     
     private String mResumedPackage = null;
 
@@ -151,11 +145,7 @@ public class BoostAdjuster implements IBoostAdjuster {
     private void updateConfigs(DeviceData.BoostData data) {
         mData = data;
 
-        mInputBoost = mData.inputBoost;
-        mCpuBoost = mData.cpuBoost;
-        mSfBoost = mData.sfBoost;
         mGameGpuBoost = mData.gGpuBoost;
-        mSysGpuBoost = mData.sGpuBoost;
 
         sConfig.clear();
         sConfig.put(data.sMin, data.uSMin);
@@ -164,16 +154,6 @@ public class BoostAdjuster implements IBoostAdjuster {
         sConfig.put(data.sMax, data.uSMax);
         sConfig.put(data.bMax, data.uBMax);
         sConfig.put(data.pMax, data.uPMax);
-
-        sBoosts.clear();
-        sBoosts.put(data.sMin, data.fBoost);
-        sBoosts.put(data.bMin, data.bigBoost ? data.fBoostB : data.uBMin);
-        sBoosts.put(data.pMin, data.fBoostP);
-
-        sMinFreqs.clear();
-        sMinFreqs.put(data.sMin, data.uSMin);
-        sMinFreqs.put(data.bMin, data.uBMin);
-        sMinFreqs.put(data.pMin, data.uPMin);
 
         sRestrictBackgroundOn.clear();
         sRestrictBackgroundOn.put(CPU_BG, data.bgLimit);
@@ -355,7 +335,6 @@ public class BoostAdjuster implements IBoostAdjuster {
         adjustCpusetCpus(CPU_NT_FG, mData.uiLimit, 0L);
         adjustCpusetCpus(CPU_DEX2OAT, mData.bgLimit, 0L);
         adjustCpusetCpus(CPU_BG, mData.bgLimit, 0L);
-        if (mInputBoost) enablePerformanceMode(true);
         UiThread.getHandler().postDelayed(inputReset, 800L);
         isNotLimited = false;
     }
@@ -383,7 +362,6 @@ public class BoostAdjuster implements IBoostAdjuster {
             adjustCpusetCpus(CPU_DEX2OAT, mData.allCores, -1L);
             adjustCpusetCpus(CPU_NT_FG, mData.allCores, -1L);
             adjustCpusetCpus(CPU_BG, mData.bgCpus, -1L);
-            if (mInputBoost) enablePerformanceMode(false);
             isNotLimited = true;
         }
     }
@@ -483,16 +461,15 @@ public class BoostAdjuster implements IBoostAdjuster {
                     }
                     break;
                 case MSG_BOOST_HINT:
-                    bootHintInternal(true);
+                    boostHintInternal(true);
                     break;
                 case MSG_DISABLE_BOOST_HINT:
-                    bootHintInternal(false);
+                    boostHintInternal(false);
                     break;
                 case MSG_GAME_BOOST:
                     final boolean boost = msg.arg1 == 1;
                     boostGpuInternal(boost ? mGameGpuBoost : 0);
                     boostTopApp(boost);
-                    enablePerformanceMode(boost);
                     break;
                 default:
                     logger("unknown msg, drop it!");
@@ -520,19 +497,6 @@ public class BoostAdjuster implements IBoostAdjuster {
         adjustCpusetCpus(CPU_BG, mData.bgLimit, 0L);
     }
     
-    public void enablePerformanceMode(boolean enabled) {
-        if (gameActive() || !mFlags.isNewState(BOOST_PF, enabled)) return;
-        if (!mCpuBoost && !mInputBoost) {
-            if (!mFlags.isActive(BOOST_PF)) return;
-            enabled = false;
-        }
-        final boolean boost = enabled;
-        mFlags.setFlag(BOOST_PF, boost);
-        mHandler.post(() -> {
-            write(boost ? sBoosts : sMinFreqs);
-        });
-    }
-
     public void boostHint(String reason, long duration) {
         if (gameActive() || duration <= 0) return;
 
@@ -554,12 +518,11 @@ public class BoostAdjuster implements IBoostAdjuster {
         }, duration);
     }
 
-    private void bootHintInternal(boolean enabled) {
+    private void boostHintInternal(boolean enabled) {
         if (!mFlags.isNewState(BOOST_HT, enabled)) return;
         mFlags.setFlag(BOOST_HT, enabled);
-        enablePerformanceMode(enabled);
         boostSF(enabled);
-        boostGpuInternal(enabled ? mSysGpuBoost : 0);
+        boostGpuInternal(enabled ? 1 : 0);
         boostTopApp(enabled);
         getProcessesAndFrozen(mResumedPackage);
     }
@@ -578,7 +541,7 @@ public class BoostAdjuster implements IBoostAdjuster {
     private void boostAnimRes(boolean enabled) {
         if (gameActive()) return;
         boostSF(enabled);
-        boostGpuInternal(enabled ? mSysGpuBoost : 0);
+        boostGpuInternal(enabled ? 1 : 0);
         boostTopApp(enabled);
         getProcessesAndFrozen(mResumedPackage);
     }
@@ -589,10 +552,6 @@ public class BoostAdjuster implements IBoostAdjuster {
     }
 
     private void boostSF(boolean enabled) {
-        if (!mSfBoost) { 
-            if (!mFlags.isActive(BOOST_SF)) return;
-            enabled = false;
-        }
         if (!mFlags.isNewState(BOOST_SF, enabled)) return;
         IBinder b = ServiceManager.getService("SurfaceFlinger");
         if (b == null) return;

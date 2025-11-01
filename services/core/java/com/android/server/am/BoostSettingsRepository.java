@@ -41,17 +41,6 @@ public class BoostSettingsRepository {
     }
 
     private static final int MAX = Integer.MAX_VALUE;
-    private static final int DEF = 1000000;
-
-    private static final String ACB = "axion_cpu_boost";
-    private static final String ABCB = "axion_big_core_boost";
-    private static final String APCB = "axion_prime_core_boost";
-    private static final String ASFB = "axion_sf_boost";
-    private static final String ATB = "axion_touch_boost";
-
-    private static final String MIN_FREQ_BOOST = "axion_min_freq_boost";
-    private static final String MIN_FREQ_BIG_BOOST = "axion_min_freq_big_boost";
-    private static final String MIN_FREQ_PRIME_BOOST = "axion_min_freq_prime_boost";
 
     private static final String MIN_FREQ = "axion_min_freq";
     private static final String MIN_FREQ_BIG = "axion_min_freq_big";
@@ -62,18 +51,9 @@ public class BoostSettingsRepository {
     private static final String MAX_FREQ_PRIME = "axion_max_freq_prime";
     
     private static final String GAME_GPU_BOOST = "axion_game_gpu_boost_level";
-    private static final String SYS_GPU_BOOST = "axion_sys_gpu_boost_level";
 
     private static final HashMap<String, Number> DEFAULTS = new HashMap<>();
     static {
-        DEFAULTS.put(ACB, 1);
-        DEFAULTS.put(ABCB, 0);
-        DEFAULTS.put(APCB, 0);
-        DEFAULTS.put(ASFB, 1);
-        DEFAULTS.put(ATB, 0);
-        DEFAULTS.put(MIN_FREQ_BOOST, DEF);
-        DEFAULTS.put(MIN_FREQ_BIG_BOOST, DEF);
-        DEFAULTS.put(MIN_FREQ_PRIME_BOOST, DEF);
         DEFAULTS.put(MIN_FREQ, 0);
         DEFAULTS.put(MIN_FREQ_BIG, 0);
         DEFAULTS.put(MIN_FREQ_PRIME, 0);
@@ -81,19 +61,9 @@ public class BoostSettingsRepository {
         DEFAULTS.put(MAX_FREQ_BIG, MAX);
         DEFAULTS.put(MAX_FREQ_PRIME, MAX);
         DEFAULTS.put(GAME_GPU_BOOST, 1);
-        DEFAULTS.put(SYS_GPU_BOOST, 1);
     }
 
     public DeviceData.BoostData loadDeviceData() {
-        boolean cpuBoost = getInt(ACB) == 1;
-        boolean bigCoreBoost = getInt(ABCB) == 1;
-        boolean primeCoreBoost = getInt(APCB) == 1;
-        boolean sfBoost = getInt(ASFB) == 1;
-        boolean inputBoost = getInt(ATB) == 1;
-
-        int minFreqBoostLittle = getInt(MIN_FREQ_BOOST);
-        int minFreqBoostBig = getInt(MIN_FREQ_BIG_BOOST);
-        int minFreqBoostPrime = getInt(MIN_FREQ_PRIME_BOOST);
 
         int minFreqLittle = getInt(MIN_FREQ);
         int minFreqBig = getInt(MIN_FREQ_BIG);
@@ -104,14 +74,11 @@ public class BoostSettingsRepository {
         int maxFreqPrime = getInt(MAX_FREQ_PRIME);
         
         int gameGpuLvlBoost = getInt(GAME_GPU_BOOST);
-        int sysGpuLvlBoost = getInt(SYS_GPU_BOOST);
 
         mDeviceData.updateSettings(
-                cpuBoost, bigCoreBoost, primeCoreBoost, sfBoost, inputBoost,
-                minFreqBoostLittle, minFreqBoostBig, minFreqBoostPrime,
                 minFreqLittle, minFreqBig, minFreqPrime,
                 maxFreqLittle, maxFreqBig, maxFreqPrime,
-                gameGpuLvlBoost, sysGpuLvlBoost
+                gameGpuLvlBoost
         );
 
         return mDeviceData.getData();
