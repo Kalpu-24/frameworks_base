@@ -534,10 +534,6 @@ public class DisplayPolicy {
 
                 @Override
                 public void onFling(int duration) {
-                    if (mService.mPowerManagerInternal != null) {
-                        mService.mPowerManagerInternal.setPowerBoost(
-                                Boost.INTERACTION, duration);
-                    }
                 }
 
                 @Override
