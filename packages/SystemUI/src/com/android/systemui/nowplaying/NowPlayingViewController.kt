@@ -165,8 +165,16 @@ constructor(
             return
         }
 
+        val isPanelCollapsed = try {
+            ScrimUtils.get().isPanelFullyCollapsed()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error checking panel state", e)
+            false
+        }
+
         val shouldShow = when {
             !isPlaying || currentTrackTitle.isEmpty() -> false
+            !isPanelCollapsed -> false
             isDozing -> currentSettings.showOnAod
             isKeyguardShowing -> currentSettings.showOnLockscreen
             else -> false
@@ -197,6 +205,10 @@ constructor(
         if (pulsing && currentSettings.showOnAod) {
             updateVisibility()
         }
+    }
+
+    override fun onQsVisibilityChanged(visible: Boolean) {
+        updateVisibility()
     }
 
     fun cleanup() {
