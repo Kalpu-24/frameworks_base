@@ -63,14 +63,14 @@ public class EmergencyButton extends Button {
         super.onFinishInflate();
         if (mEmergencyAffordanceManager.needsEmergencyAffordance()) {
             setOnLongClickListener(v -> {
-                boolean isEmergencyCallButton = getVisibility() == View.VISIBLE
-                        && TextUtils.equals(getText(), getEmergencyButtonLabel());
-                if (isEmergencyCallButton
-                        && !mLongPressWasDragged
-                        && mEmergencyAffordanceManager.needsEmergencyAffordance()) {
-                    mEmergencyAffordanceManager.performEmergencyCall();
-                    return true;
-                }
+                // boolean isEmergencyCallButton = getVisibility() == View.VISIBLE
+                //         && TextUtils.equals(getText(), getEmergencyButtonLabel());
+                // if (isEmergencyCallButton
+                //         && !mLongPressWasDragged
+                //         && mEmergencyAffordanceManager.needsEmergencyAffordance()) {
+                //     mEmergencyAffordanceManager.performEmergencyCall();
+                //     return true;
+                // }
                 return false;
             });
         }
@@ -89,26 +89,28 @@ public class EmergencyButton extends Button {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        final int x = (int) event.getX();
-        final int y = (int) event.getY();
-        if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
-            mDownX = x;
-            mDownY = y;
-            mLongPressWasDragged = false;
-        } else {
-            final int xDiff = Math.abs(x - mDownX);
-            final int yDiff = Math.abs(y - mDownY);
-            int touchSlop = ViewConfiguration.get(mContext).getScaledTouchSlop();
-            if (Math.abs(yDiff) > touchSlop || Math.abs(xDiff) > touchSlop) {
-                mLongPressWasDragged = true;
-            }
-        }
-        return super.onTouchEvent(event);
+        // final int x = (int) event.getX();
+        // final int y = (int) event.getY();
+        // if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+        //     mDownX = x;
+        //     mDownY = y;
+        //     mLongPressWasDragged = false;
+        // } else {
+        //     final int xDiff = Math.abs(x - mDownX);
+        //     final int yDiff = Math.abs(y - mDownY);
+        //     int touchSlop = ViewConfiguration.get(mContext).getScaledTouchSlop();
+        //     if (Math.abs(yDiff) > touchSlop || Math.abs(xDiff) > touchSlop) {
+        //         mLongPressWasDragged = true;
+        //     }
+        // }
+        // return super.onTouchEvent(event);
+        return false;
     }
 
     @Override
     public boolean performLongClick() {
-        return super.performLongClick();
+        // return super.performLongClick();
+        return false;
     }
 
     void updateEmergencyCallButton(boolean isInCall, boolean hasTelephonyRadio, boolean simLocked,
@@ -129,7 +131,7 @@ public class EmergencyButton extends Button {
             }
         }
         if (visible) {
-            setVisibility(View.VISIBLE);
+            setVisibility(View.GONE);
 
             int textId;
             if (isInCall) {

@@ -41,6 +41,7 @@ public class EmergencyCarrierArea extends AlphaOptimizedLinearLayout {
         super.onFinishInflate();
         mCarrierText = findViewById(R.id.carrier_text);
         mEmergencyButton = findViewById(R.id.emergency_call_button);
+        mEmergencyButton.setVisibility(View.GONE);
 
         // The emergency button overlaps the carrier text, only noticeable when highlighted.
         // So temporarily hide the carrier text while the emergency button is pressed.

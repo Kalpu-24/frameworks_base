@@ -141,6 +141,8 @@ constructor(
         val customUdfpsIcon = packageInstalled && (Settings.System.getIntForUser(
             mContext.contentResolver, Settings.System.UDFPS_ICON, 0, UserHandle.USER_CURRENT
         ) != 0)
+        val HiddenUdfpsAod = (Settings.System.getIntForUser(getContext().getContentResolver(), "udfps_aod_hidden", 0, UserHandle.USER_CURRENT) != 0)
+        val ConsistentUDFPS = (Settings.System.getIntForUser(getContext().getContentResolver(), "udfps_consistent", 0, UserHandle.USER_CURRENT) != 0)
 
         // Lockscreen States
         // LOCK
@@ -176,11 +178,11 @@ constructor(
 
         // AOD states
         // LOCK
-        animatedIconDrawable.addState(
-            getIconState(IconType.LOCK, true),
-            context.getDrawable(R.drawable.ic_lock_aod)!!,
-            R.id.locked_aod,
-        )
+        //animatedIconDrawable.addState(
+        //    getIconState(IconType.LOCK, true),
+        //    context.getDrawable(R.drawable.ic_lock_aod)!!,
+        //    R.id.locked_aod,
+        //)
         // UNLOCK
         animatedIconDrawable.addState(
             getIconState(IconType.UNLOCK, true),
@@ -191,11 +193,28 @@ constructor(
         LottieCompositionFactory.fromRawRes(mContext, R.raw.udfps_aod_fp).addListener { result ->
             aodstockFpDrawable.setComposition(result)
         }
-        animatedIconDrawable.addState(
-            getIconState(IconType.FINGERPRINT, true),
-            aodstockFpDrawable,
-            R.id.udfps_aod_fp,
-        )
+        if (!HiddenUdfpsAod){
+            if (!ConsistentUDFPS){
+                animatedIconDrawable.addState(
+                getIconState(IconType.FINGERPRINT, true),
+                aodstockFpDrawable,
+                R.id.udfps_aod_fp,
+                )
+            } else if (customUdfpsIcon) {
+                fingerprintDrawable.setBounds(0, 0, bgView.width, bgView.height)
+                animatedIconDrawable.addState(
+                    getIconState(IconType.FINGERPRINT, true),
+                    fingerprintDrawable,
+                    R.id.locked_fp
+                )
+            } else {
+                animatedIconDrawable.addState(
+                    getIconState(IconType.FINGERPRINT, true),
+                    aodFpDrawable,
+                    R.id.locked_fp,
+                )
+            }
+        }
 
         // WILDCARD: should always be the last state added since any states will match with this
         // and therefore won't get matched with subsequent states.
